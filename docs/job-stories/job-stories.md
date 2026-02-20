@@ -39,3 +39,35 @@ Job Story 5:
 When done with booking,  
 he wants to download the invoice straight away,  
 so he can send it for expenses.
+
+## Maria
+
+Job Story 1:
+
+When Maria is searching for flights on a tight budget,
+she wants to quickly find the cheapest options,
+so she doesn’t spend too much time comparing.
+
+---
+
+Job Story 2:
+
+When she is choosing a flight,
+she wants to clearly see the full price including all extra fees,
+so she doesn’t get surprised at checkout.
+
+---
+
+Job Story 3:
+
+When browsing different flights,
+she wants simple filters (price, time, duration),
+so she can narrow down options easily.
+
+---
+
+Job Story 4:
+
+When booking from her phone,
+she wants the process to be fast and simple,
+so she can complete it without getting frustrated.

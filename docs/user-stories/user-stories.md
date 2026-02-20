@@ -41,3 +41,31 @@ User Story 6:
 As a frequent business traveller,  
 I want to view my previous bookings,  
 so I can manage or change them easily.
+
+## Maria
+
+User Story 1:
+As a budget-conscious student,
+I want to quickly find the cheapest flights,
+so I can stay within my limited budget.
+
+---
+
+User Story 2:
+As a budget-conscious student,
+I want to see the full price (including baggage and extra costs) before paying,
+so I don’t get unexpected charges.
+
+---
+
+User Story 3:
+As a budget-conscious student,
+I want simple filters (price, time, duration),
+so I can easily narrow down my options.
+
+---
+
+User Story 4:
+As a budget-conscious student,
+I want a fast and simple booking process on my phone,
+so I can book without getting overwhelmed.
