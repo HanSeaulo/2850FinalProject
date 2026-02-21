@@ -1,0 +1,62 @@
+// Flight Booking System - Initial Database Structure
+
+Table users {
+  id integer [primary key]
+  name varchar
+  email varchar [unique]
+  role varchar // "customer" or "staff"
+  password varchar
+  created_at timestamp
+}
+
+Table flights {
+  id integer [primary key]
+  flight_number varchar
+  departure_airport varchar
+  arrival_airport varchar
+  departure_time timestamp
+  arrival_time timestamp
+  price decimal
+  total_seats integer
+  available_seats integer
+  created_at timestamp
+}
+
+Table bookings {
+  id integer [primary key]
+  user_id integer
+  flight_id integer
+  status varchar // "confirmed", "cancelled", "pending"
+  total_price decimal
+  created_at timestamp
+}
+
+Table passengers {
+  id integer [primary key]
+  booking_id integer
+  first_name varchar
+  last_name varchar
+  email varchar
+}
+
+Table requests {
+  id integer [primary key]
+  booking_id integer
+  type varchar // "modification" or "cancellation"
+  status varchar // "pending", "approved", "rejected"
+  created_at timestamp
+  processed_at timestamp
+}
+
+Table reports {
+  id integer [primary key]
+  generated_at timestamp
+  report_type varchar
+}
+
+// Relationships
+
+Ref: bookings.user_id > users.id
+Ref: bookings.flight_id > flights.id
+Ref: passengers.booking_id > bookings.id
+Ref: requests.booking_id > bookings.id
