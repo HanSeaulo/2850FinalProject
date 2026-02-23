@@ -29,6 +29,12 @@ dependencies {
 
     // This dependency is used by the application.
     implementation(libs.guava)
+
+    //ADDING KTOR dependencies
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
