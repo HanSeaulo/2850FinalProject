@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Search for Flights</title>
+  </head>
+
+  <body>
+    <div align="center">
+      <h1>Search for Flights</h1>
+
+      <form action="/flights" method="get">
+        <table border="0" cellpadding="10">
+          <!-- Trip type (simple dots) -->
+          <tr>
+            <td colspan="2">
+              <label>
+                <input type="radio" name="tripType" value="roundtrip" checked />
+                Round trip
+              </label>
+              &nbsp;&nbsp;
+              <label>
+                <input type="radio" name="tripType" value="oneway" />
+                One way
+              </label>
+            </td>
+          </tr>
+
+          <!-- From / To side-by-side -->
+          <tr>
+            <td>
+              <label>
+                From<br />
+                <input type="text" name="from" placeholder="City / Airport" required />
+              </label>
+            </td>
+            <td>
+              <label>
+                To<br />
+                <input type="text" name="to" placeholder="City / Airport" required />
+              </label>
+            </td>
+          </tr>
+
+          <!-- Dates side-by-side -->
+          <tr>
+            <td>
+              <label>
+                Departing<br />
+                <input type="date" name="departDate" required />
+              </label>
+            </td>
+            <td>
+              <label>
+                Returning<br />
+                <input type="date" name="returnDate" />
+              </label>
+            </td>
+          </tr>
+
+          <!-- Passengers + Class side-by-side -->
+          <tr>
+            <td>
+              <label>
+                Passengers<br />
+                <select name="passengers">
+                  <option value="1" selected>1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                </select>
+              </label>
+            </td>
+            <td>
+              <label>
+                Class<br />
+                <select name="cabinClass">
+                  <option value="economy" selected>Economy</option>
+                  <option value="business">Business</option>
+                </select>
+              </label>
+            </td>
+          </tr>
+
+          <!-- Submit -->
+          <tr>
+            <td colspan="2" align="right">
+              <button type="submit">Search flights</button>
+            </td>
+          </tr>
+        </table>
+      </form>
+    </div>
+  </body>
+</html>
