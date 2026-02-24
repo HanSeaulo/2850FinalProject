@@ -48,7 +48,6 @@ private fun homePageHtml(): String = """
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Flight Booking System</title>
-  // refer to css files
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
@@ -65,8 +64,17 @@ private fun homePageHtml(): String = """
   </header>
 
   <main class="hero">
-
-    <a href="/flights" class="big-button">
+    <div class="features">
+    <div class="feature-card">
+      <h3>Best Prices</h3>
+      <p>Competitive fares worldwide</p>
+    </div>
+    <div class="feature-card">
+      <h3>Secure Booking</h3>
+      <p>Safe and encrypted payments.</p>
+    </div>
+  </div>
+  <a href="/flights" class="big-button">
       MAKE A BOOKING
     </a>
   </main>

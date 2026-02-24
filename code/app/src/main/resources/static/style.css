@@ -63,6 +63,29 @@ body {
   opacity: 0.9;
 }
 
+.features {
+  display: flex;
+  gap: 25px;
+  margin-top: 60px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.feature-card {
+  background: rgba(255,255,255,0.15);
+  padding: 25px;
+  border-radius: 15px;
+  width: 220px;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  transition: 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255,255,255,0.25);
+}
+
 .big-button {
   background: white;
   color: var(--primary);
