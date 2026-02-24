@@ -1,0 +1,81 @@
+:root {
+  --primary: #2563eb;
+  --dark: #0f172a;
+  --light: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: white;
+}
+
+.navbar {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px 40px;
+  backdrop-filter: blur(8px);
+}
+
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  margin-left: 25px;
+  font-weight: 500;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+}
+
+.hero {
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.hero p {
+  font-size: 20px;
+  margin-bottom: 40px;
+  opacity: 0.9;
+}
+
+.big-button {
+  background: white;
+  color: var(--primary);
+  padding: 20px 50px;
+  font-size: 22px;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 50px;
+  transition: 0.2s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.big-button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
