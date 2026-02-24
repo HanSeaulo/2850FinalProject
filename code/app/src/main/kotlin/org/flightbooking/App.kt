@@ -48,11 +48,11 @@ private fun homePageHtml(): String = """
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Flight Booking System</title>
+  // refer to css files
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
 
-  <!-- Top Banner -->
   <header class="navbar">
     <div class="nav-container">
       <div class="logo">✈ Go Fly</div>
@@ -64,7 +64,6 @@ private fun homePageHtml(): String = """
     </div>
   </header>
 
-  <!-- Main Section -->
   <main class="hero">
 
     <a href="/flights" class="big-button">
