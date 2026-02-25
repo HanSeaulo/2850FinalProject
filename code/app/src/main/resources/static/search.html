@@ -1,97 +1,107 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Search for Flights</title>
-  </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Search - Leeds Travel Project</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="hero">
 
-  <body>
-    <div align="center">
-      <h1>Search for Flights</h1>
+    <main class="search-wrapper">
+        <h2>Find Your Next Destination</h2>
+        
+        <form action="/search" method="GET">
+            <div class="trip-selector">
+                <label>
+                    <input type="radio" name="path" value="roundtrip" id="rt-option" checked onchange="checkTripType()"> 
+                    Round Trip
+                </label>
+                <label>
+                    <input type="radio" name="path" value="oneway" id="ow-option" onchange="checkTripType()"> 
+                    One Way
+                </label>
+            </div>
 
-      <form action="/flights" method="get">
-        <table border="0" cellpadding="10">
-          <!-- Trip type (simple dots) -->
-          <tr>
-            <td colspan="2">
-              <label>
-                <input type="radio" name="tripType" value="roundtrip" checked />
-                Round trip
-              </label>
-              &nbsp;&nbsp;
-              <label>
-                <input type="radio" name="tripType" value="oneway" />
-                One way
-              </label>
-            </td>
-          </tr>
+            <div class="input-row">
+                <div>
+                    <label>From</label>
+                    <input type="text" name="from" placeholder="e.g. LBA" required>
+                </div>
+                <div>
+                    <label>To</label>
+                    <input type="text" name="to" placeholder="e.g. PEK" required>
+                </div>
+            </div>
 
-          <!-- From / To side-by-side -->
-          <tr>
-            <td>
-              <label>
-                From<br />
-                <input type="text" name="from" placeholder="City / Airport" required />
-              </label>
-            </td>
-            <td>
-              <label>
-                To<br />
-                <input type="text" name="to" placeholder="City / Airport" required />
-              </label>
-            </td>
-          </tr>
+            <div class="input-row">
+                <div>
+                    <label>Departure</label>
+                    <input type="date" id="dep-date" name="depart" required onchange="lockDates()">
+                </div>
+                <div>
+                    <label>Return</label>
+                    <input type="date" id="ret-date" name="return">
+                </div>
+            </div>
 
-          <!-- Dates side-by-side -->
-          <tr>
-            <td>
-              <label>
-                Departing<br />
-                <input type="date" name="departDate" required />
-              </label>
-            </td>
-            <td>
-              <label>
-                Returning<br />
-                <input type="date" name="returnDate" />
-              </label>
-            </td>
-          </tr>
+            <div class="input-row">
+                <div>
+                    <label>Passengers</label>
+                    <input type="number" name="qty" min="1" value="1">
+                </div>
+                <div>
+                    <label>Cabin Class</label>
+                    <select name="class">
+                        <option value="econ">Economy</option>
+                        <option value="bus">Business</option>
+                    </select>
+                </div>
+            </div>
 
-          <!-- Passengers + Class side-by-side -->
-          <tr>
-            <td>
-              <label>
-                Passengers<br />
-                <select name="passengers">
-                  <option value="1" selected>1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                </select>
-              </label>
-            </td>
-            <td>
-              <label>
-                Class<br />
-                <select name="cabinClass">
-                  <option value="economy" selected>Economy</option>
-                  <option value="business">Business</option>
-                </select>
-              </label>
-            </td>
-          </tr>
+            <div class="submit-area">
+                <button type="submit" class="btn-find">Search Flights</button>
+            </div>
+        </form>
+    </main>
 
-          <!-- Submit -->
-          <tr>
-            <td colspan="2" align="right">
-              <button type="submit">Search flights</button>
-            </td>
-          </tr>
-        </table>
-      </form>
-    </div>
-  </body>
+    <script>
+        // Function to grey out the return date if 'One Way' is picked
+        function checkTripType() {
+            const returnBox = document.getElementById('ret-date');
+            const isOneWay = document.getElementById('ow-option').checked;
+            
+            if (isOneWay) {
+                returnBox.disabled = true;
+                returnBox.value = ""; // Clear it so no junk data is sent
+                returnBox.style.opacity = "0.4"; 
+            } else {
+                returnBox.disabled = false;
+                returnBox.style.opacity = "1";
+            }
+        }
+
+        // Stops people from picking a return date before they even leave
+        function lockDates() {
+            const departVal = document.getElementById('dep-date').value;
+            const returnField = document.getElementById('ret-date');
+            
+            // Set the minimum return date to whatever they picked for departure
+            returnField.min = departVal;
+            
+            // If they change departure to a later date than the return they already picked, reset it
+            if (returnField.value && returnField.value < departVal) {
+                returnField.value = "";
+                alert("Wait, your return date can't be earlier than your departure!");
+            }
+        }
+
+        // Making sure you can't book a flight in the past when the page loads
+        window.onload = function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dep-date').min = today;
+            checkTripType();
+        };
+    </script>
+</body>
 </html>
