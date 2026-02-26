@@ -2,60 +2,99 @@ SELECT * FROM users;
 
 -- PRAGMA foreign_keys = ON;
 
--- CREATE TABLE users (
---   id INTEGER PRIMARY KEY AUTOINCREMENT,
---   name TEXT,
---   email TEXT UNIQUE,
---   role TEXT,
---   password TEXT,
---   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
--- );
+-- -- ============================================================
+-- -- SEED DATA FOR FLIGHT BOOKING DATABASE (SQLite)
+-- -- ============================================================
 
--- CREATE TABLE flights (
---   id INTEGER PRIMARY KEY AUTOINCREMENT,
---   flight_number TEXT,
---   departure_airport TEXT,
---   arrival_airport TEXT,
---   departure_time DATETIME,
---   arrival_time DATETIME,
---   price REAL,
---   total_seats INTEGER,
---   available_seats INTEGER,
---   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
--- );
+-- -- USERS
+-- INSERT INTO users (id, name, email, role, password, created_at) VALUES
+-- (1,  'Alice Johnson',  'alice.johnson@email.com',  'admin',    'hashed_pw_1',  '2024-01-05 09:00:00'),
+-- (2,  'Bob Smith',      'bob.smith@email.com',       'customer', 'hashed_pw_2',  '2024-01-10 11:30:00'),
+-- (3,  'Carol White',    'carol.white@email.com',     'customer', 'hashed_pw_3',  '2024-02-14 08:15:00'),
+-- (4,  'David Brown',    'david.brown@email.com',     'customer', 'hashed_pw_4',  '2024-03-01 14:00:00'),
+-- (5,  'Emma Davis',     'emma.davis@email.com',      'customer', 'hashed_pw_5',  '2024-03-20 10:45:00'),
+-- (6,  'Frank Miller',   'frank.miller@email.com',    'agent',    'hashed_pw_6',  '2024-04-05 09:30:00'),
+-- (7,  'Grace Wilson',   'grace.wilson@email.com',    'customer', 'hashed_pw_7',  '2024-04-18 16:00:00'),
+-- (8,  'Henry Moore',    'henry.moore@email.com',     'customer', 'hashed_pw_8',  '2024-05-02 13:20:00'),
+-- (9,  'Isla Taylor',    'isla.taylor@email.com',     'agent',    'hashed_pw_9',  '2024-05-15 09:00:00'),
+-- (10, 'Jack Anderson',  'jack.anderson@email.com',   'customer', 'hashed_pw_10', '2024-06-01 10:00:00');
 
--- CREATE TABLE bookings (
---   id INTEGER PRIMARY KEY AUTOINCREMENT,
---   user_id INTEGER,
---   flight_id INTEGER,
---   status TEXT,
---   total_price REAL,
---   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
---   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
---   FOREIGN KEY (flight_id) REFERENCES flights(id) ON DELETE CASCADE
--- );
+-- -- FLIGHTS
+-- INSERT INTO flights (id, flight_number, departure_airport, arrival_airport, departure_time, arrival_time, price, total_seats, available_seats, created_at) VALUES
+-- (1,  'BA101', 'LHR', 'JFK', '2025-03-01 08:00:00', '2025-03-01 11:00:00', 450.00,  200, 45,  '2024-12-01 09:00:00'),
+-- (2,  'AA202', 'JFK', 'LAX', '2025-03-02 10:30:00', '2025-03-02 13:45:00', 210.00,  180, 120, '2024-12-01 09:05:00'),
+-- (3,  'EK303', 'DXB', 'SYD', '2025-03-03 23:00:00', '2025-03-04 18:30:00', 890.00,  350, 200, '2024-12-01 09:10:00'),
+-- (4,  'LH404', 'FRA', 'SIN', '2025-03-05 14:00:00', '2025-03-06 08:00:00', 720.00,  280, 95,  '2024-12-01 09:15:00'),
+-- (5,  'QF505', 'SYD', 'LAX', '2025-03-07 09:00:00', '2025-03-07 05:30:00', 1100.00, 300, 10,  '2024-12-01 09:20:00'),
+-- (6,  'FR606', 'DUB', 'BCN', '2025-03-10 06:30:00', '2025-03-10 10:00:00', 89.00,   189, 75,  '2024-12-01 09:25:00'),
+-- (7,  'UA707', 'ORD', 'MIA', '2025-03-12 15:00:00', '2025-03-12 19:30:00', 175.00,  160, 60,  '2024-12-01 09:30:00'),
+-- (8,  'SQ808', 'SIN', 'NRT', '2025-03-15 07:00:00', '2025-03-15 14:30:00', 520.00,  250, 180, '2024-12-01 09:35:00'),
+-- (9,  'AF909', 'CDG', 'JFK', '2025-03-18 11:00:00', '2025-03-18 14:00:00', 600.00,  220, 30,  '2024-12-01 09:40:00'),
+-- (10, 'TK010', 'IST', 'LHR', '2025-03-20 05:30:00', '2025-03-20 08:00:00', 310.00,  190, 140, '2024-12-01 09:45:00');
 
--- CREATE TABLE passengers (
---   id INTEGER PRIMARY KEY AUTOINCREMENT,
---   booking_id INTEGER,
---   first_name TEXT,
---   last_name TEXT,
---   email TEXT,
---   FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
--- );
+-- -- BOOKINGS
+-- INSERT INTO bookings (id, user_id, flight_id, status, total_price, created_at) VALUES
+-- (1,  2,  1,  'confirmed', 450.00,  '2025-01-10 10:00:00'),
+-- (2,  3,  1,  'confirmed', 900.00,  '2025-01-12 14:30:00'),
+-- (3,  4,  2,  'confirmed', 210.00,  '2025-01-15 09:00:00'),
+-- (4,  5,  3,  'confirmed', 890.00,  '2025-01-20 16:00:00'),
+-- (5,  7,  4,  'pending',   720.00,  '2025-01-22 11:00:00'),
+-- (6,  8,  5,  'confirmed', 2200.00, '2025-01-25 08:45:00'),
+-- (7,  2,  6,  'cancelled', 89.00,   '2025-01-28 13:00:00'),
+-- (8,  10, 7,  'confirmed', 350.00,  '2025-02-01 10:30:00'),
+-- (9,  3,  8,  'confirmed', 1040.00, '2025-02-05 09:15:00'),
+-- (10, 4,  9,  'pending',   600.00,  '2025-02-08 15:00:00'),
+-- (11, 5,  10, 'confirmed', 310.00,  '2025-02-10 12:00:00'),
+-- (12, 7,  2,  'confirmed', 420.00,  '2025-02-12 11:30:00'),
+-- (13, 8,  6,  'cancelled', 178.00,  '2025-02-14 08:00:00'),
+-- (14, 10, 1,  'confirmed', 450.00,  '2025-02-15 14:00:00'),
+-- (15, 6,  3,  'refunded',  890.00,  '2025-02-16 09:00:00');
 
--- CREATE TABLE requests (
---   id INTEGER PRIMARY KEY AUTOINCREMENT,
---   booking_id INTEGER,
---   type TEXT,
---   status TEXT,
---   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
---   processed_at DATETIME,
---   FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
--- );
+-- -- PASSENGERS
+-- INSERT INTO passengers (id, booking_id, first_name, last_name, email) VALUES
+-- (1,  1,  'Bob',    'Smith',    'bob.smith@email.com'),
+-- (2,  2,  'Carol',  'White',    'carol.white@email.com'),
+-- (3,  2,  'Tom',    'White',    'tom.white@email.com'),
+-- (4,  3,  'David',  'Brown',    'david.brown@email.com'),
+-- (5,  4,  'Emma',   'Davis',    'emma.davis@email.com'),
+-- (6,  5,  'Grace',  'Wilson',   'grace.wilson@email.com'),
+-- (7,  6,  'Henry',  'Moore',    'henry.moore@email.com'),
+-- (8,  6,  'Sophie', 'Moore',    'sophie.moore@email.com'),
+-- (9,  7,  'Bob',    'Smith',    'bob.smith@email.com'),
+-- (10, 8,  'Jack',   'Anderson', 'jack.anderson@email.com'),
+-- (11, 8,  'Lily',   'Anderson', 'lily.anderson@email.com'),
+-- (12, 9,  'Carol',  'White',    'carol.white@email.com'),
+-- (13, 9,  'Tom',    'White',    'tom.white@email.com'),
+-- (14, 10, 'David',  'Brown',    'david.brown@email.com'),
+-- (15, 11, 'Emma',   'Davis',    'emma.davis@email.com'),
+-- (16, 12, 'Grace',  'Wilson',   'grace.wilson@email.com'),
+-- (17, 12, 'Mark',   'Wilson',   'mark.wilson@email.com'),
+-- (18, 13, 'Henry',  'Moore',    'henry.moore@email.com'),
+-- (19, 13, 'Sophie', 'Moore',    'sophie.moore@email.com'),
+-- (20, 14, 'Jack',   'Anderson', 'jack.anderson@email.com');
 
--- CREATE TABLE reports (
---   id INTEGER PRIMARY KEY AUTOINCREMENT,
---   generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
---   report_type TEXT
--- );
+-- -- REQUESTS
+-- INSERT INTO requests (id, booking_id, type, status, created_at, processed_at) VALUES
+-- (1,  7,  'cancellation', 'approved', '2025-01-29 09:00:00', '2025-01-29 11:30:00'),
+-- (2,  13, 'cancellation', 'approved', '2025-02-14 10:00:00', '2025-02-14 14:00:00'),
+-- (3,  15, 'refund',       'approved', '2025-02-17 08:00:00', '2025-02-18 09:00:00'),
+-- (4,  5,  'seat_change',  'pending',  '2025-01-23 12:00:00', NULL),
+-- (5,  8,  'meal_request', 'approved', '2025-02-02 10:00:00', '2025-02-02 10:30:00'),
+-- (6,  9,  'upgrade',      'rejected', '2025-02-06 11:00:00', '2025-02-06 15:00:00'),
+-- (7,  10, 'seat_change',  'pending',  '2025-02-09 09:30:00', NULL),
+-- (8,  1,  'meal_request', 'approved', '2025-01-11 08:00:00', '2025-01-11 08:15:00'),
+-- (9,  6,  'upgrade',      'approved', '2025-01-26 10:00:00', '2025-01-27 09:00:00'),
+-- (10, 14, 'meal_request', 'pending',  '2025-02-15 15:00:00', NULL);
+
+-- -- REPORTS
+-- INSERT INTO reports (id, generated_at, report_type) VALUES
+-- (1,  '2025-01-31 23:59:00', 'monthly_bookings'),
+-- (2,  '2025-01-31 23:59:01', 'monthly_revenue'),
+-- (3,  '2025-01-31 23:59:02', 'flight_occupancy'),
+-- (4,  '2025-02-28 23:59:00', 'monthly_bookings'),
+-- (5,  '2025-02-28 23:59:01', 'monthly_revenue'),
+-- (6,  '2025-02-28 23:59:02', 'flight_occupancy'),
+-- (7,  '2025-02-28 23:59:03', 'cancellations'),
+-- (8,  '2025-01-01 06:00:00', 'weekly_summary'),
+-- (9,  '2025-01-08 06:00:00', 'weekly_summary'),
+-- (10, '2025-01-15 06:00:00', 'weekly_summary');

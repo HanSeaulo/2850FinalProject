@@ -17,12 +17,12 @@ object DBFactory {
         transaction {
             // create the tables if they dont already exist
             SchemaUtils.create(
-                Reports, 
-                Users, 
-                Flights, 
-                Bookings, 
-                Passengers,
-                Requests
+                ReportsTable, 
+                UsersTable, 
+                FlightsTable, 
+                BookingsTable, 
+                PassengersTable,
+                RequestsTable
             )
         }
         println("All tables present")
