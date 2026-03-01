@@ -46,6 +46,10 @@ fun main() {
             get("/search") {
                 call.respondRedirect("/search.html")
             }
+
+            get("/report") {
+                call.respondRedirect("/report.html")
+            }
         }
 
     }.start(wait = true)
