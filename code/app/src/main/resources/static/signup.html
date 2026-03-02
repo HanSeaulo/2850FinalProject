@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="brand">
+        <h1>Sign Up</h1>
+        <p>Create an account to save passengers and track bookings.</p>
+      </div>
+
+      <!-- action can be /signup later -->
+      <form class="auth-form" action="#" method="post">
+        <label for="name">Full name</label>
+        <input id="name" name="name" type="text" placeholder="Your name" required />
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" required />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Create a password" required />
+
+        <label for="confirm">Confirm password</label>
+        <input id="confirm" name="confirm" type="password" placeholder="Repeat password" required />
+
+        <button type="submit" class="primary">Create Account</button>
+      </form>
+
+      <p class="footer-text">
+        Already have an account?
+        <a class="link" href="login.html">Log in</a>
+      </p>
+    </div>
+  </main>
+</body>
+</html>

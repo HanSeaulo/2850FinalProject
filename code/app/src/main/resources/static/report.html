@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+<div class="search-wrapper">
+  <h2>Report</h2>
+
+  <form action="/report" method="post">
+
+    <div class="input-row">
+      <div>
+        <label>References</label>
+        <input type="text" name="bookingRef" placeholder="e.g. GF12345" required>
+      </div>
+
+      <div>
+        <label>Issue Type</label>
+        <select name="issueType" required>
+          <option value="">Select one</option>
+          <option>Booking</option>
+          <option>Payment</option>
+          <option>Account</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <label style="display:block;margin-bottom:8px;">Description</label>
+      <textarea name="details" rows="5"
+        style="width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.95);color:#0f172a;">
+      </textarea>
+    </div>
+
+    <div class="submit-area">
+      <button class="btn-find" type="submit">Submit</button>
+    </div>
+
+  </form>
+</div>
+
+</body>
+</html>

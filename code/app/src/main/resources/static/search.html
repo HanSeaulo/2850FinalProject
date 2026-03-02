@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Search - Leeds Travel Project</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="hero">
+
+    <main class="search-wrapper">
+        <h2>Find Your Next Destination</h2>
+        
+        <form action="/search" method="GET">
+            <div class="trip-selector">
+                <label>
+                    <input type="radio" name="path" value="roundtrip" id="rt-option" checked onchange="checkTripType()"> 
+                    Round Trip
+                </label>
+                <label>
+                    <input type="radio" name="path" value="oneway" id="ow-option" onchange="checkTripType()"> 
+                    One Way
+                </label>
+            </div>
+
+            <div class="input-row">
+                <div>
+                    <label>From</label>
+                    <input type="text" name="from" placeholder="e.g. LBA" required>
+                </div>
+                <div>
+                    <label>To</label>
+                    <input type="text" name="to" placeholder="e.g. PEK" required>
+                </div>
+            </div>
+
+            <div class="input-row">
+                <div>
+                    <label>Departure</label>
+                    <input type="date" id="dep-date" name="depart" required onchange="lockDates()">
+                </div>
+                <div>
+                    <label>Return</label>
+                    <input type="date" id="ret-date" name="return">
+                </div>
+            </div>
+
+            <div class="input-row">
+                <div>
+                    <label>Passengers</label>
+                    <input type="number" name="qty" min="1" value="1">
+                </div>
+                <div>
+                    <label>Cabin Class</label>
+                    <select name="class">
+                        <option value="econ">Economy</option>
+                        <option value="bus">Business</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="submit-area">
+                <button type="submit" class="btn-find">Search Flights</button>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        // Function to grey out the return date if 'One Way' is picked
+        function checkTripType() {
+            const returnBox = document.getElementById('ret-date');
+            const isOneWay = document.getElementById('ow-option').checked;
+            
+            if (isOneWay) {
+                returnBox.disabled = true;
+                returnBox.value = ""; // Clear it so no junk data is sent
+                returnBox.style.opacity = "0.4"; 
+            } else {
+                returnBox.disabled = false;
+                returnBox.style.opacity = "1";
+            }
+        }
+
+        // Stops people from picking a return date before they even leave
+        function lockDates() {
+            const departVal = document.getElementById('dep-date').value;
+            const returnField = document.getElementById('ret-date');
+            
+            // Set the minimum return date to whatever they picked for departure
+            returnField.min = departVal;
+            
+            // If they change departure to a later date than the return they already picked, reset it
+            if (returnField.value && returnField.value < departVal) {
+                returnField.value = "";
+                alert("Wait, your return date can't be earlier than your departure!");
+            }
+        }
+
+        // Making sure you can't book a flight in the past when the page loads
+        window.onload = function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dep-date').min = today;
+            checkTripType();
+        };
+    </script>
+</body>
+</html>
