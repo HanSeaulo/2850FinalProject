@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flight Booking System</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <div class="bg bg-a" id="bgA"></div>
+  <div class="bg bg-b" id="bgB"></div>
+
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">✈ Go Fly</div>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/booking.html">View Bookings</a>
+        <a href="/login.html">Sign In</a>
+        <a href="/management.html">Management</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="hero">
+  <!-- background layers only for the hero -->
+  <div class="hero-bg" id="bgA"></div>
+  <div class="hero-bg" id="bgB"></div>
+
+  <!-- content sits above background -->
+  <div class="hero-inner">
+    <div class="features">
+      <div class="feature-card">
+        <h3>Best Prices</h3>
+        <p>Competitive fares worldwide</p>
+      </div>
+      <div class="feature-card">
+        <h3>Secure Booking</h3>
+        <p>Safe and encrypted payments</p>
+      </div>
+    </div>
+
+    <a href="/search.html" class="big-button">MAKE A BOOKING</a>
+  </div>
+</main>
+
+<script>
+  const images = ["/bg/bg1.jpeg", "/bg/bg2.jpeg", "/bg/bg3.jpeg"];
+
+  let index = 0;
+  let showingA = true;
+
+  const bgA = document.getElementById("bgA");
+  const bgB = document.getElementById("bgB");
+
+  bgA.style.backgroundImage = "url('" + images[0] + "')";
+  bgA.classList.add("show");
+
+  setInterval(() => {
+    index = (index + 1) % images.length;
+    const next = images[index];
+
+    const showEl = showingA ? bgB : bgA;
+    const hideEl = showingA ? bgA : bgB;
+
+    showEl.style.backgroundImage = "url('" + next + "')";
+    showEl.classList.add("show");
+    hideEl.classList.remove("show");
+
+    showingA = !showingA;
+  }, 6000);
+</script>
+
+</body>
+</html>

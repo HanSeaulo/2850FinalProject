@@ -1,5 +1,6 @@
 package org.flightbooking
 
+import io.ktor.http.*
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.application.*
@@ -21,7 +22,7 @@ fun main() {
             staticResources("/", "static")
 
             get("/") {
-                call.respondText("Ktor is running!")
+                call.respondRedirect("/home.html")
             }
 
             get("/flights") {
@@ -50,6 +51,10 @@ fun main() {
             get("/report") {
                 call.respondRedirect("/report.html")
             }
+
+            get("/management") {
+                call.respondRedirect("/management.html")
+                }
         }
 
     }.start(wait = true)
