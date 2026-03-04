@@ -10,52 +10,73 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.http.content.*
 
+import database.DBFactory
+import access.FlightAccess
+
+fun FlightsTest() {
+    println("Establishing DB Connection...")
+    DBFactory.init()
+    println("Connection successful")
+
+    val flightAccess = FlightAccess()
+    val getall = flightAccess.searchFlights("LHR", "JFK")
+    //val getall = flightAccess.getAll()
+
+    println("All data in flights table: ")
+    println(getall.joinToString())
+
+
+}
+
 fun main() {
-    embeddedServer(Netty, port = 8080) {
 
-        install(ContentNegotiation) {
-            json()
-        }
+    FlightsTest()
 
-        routing {
-            // So it also gets the files from 'app/src/main/resources/static' the static folder
-            staticResources("/", "static")
+    // embeddedServer(Netty, port = 8080) {
 
-            get("/") {
-                call.respondRedirect("/home.html")
-            }
+    //     install(ContentNegotiation) {
+    //         json()
+    //     }
 
-            get("/flights") {
-                val from = call.request.queryParameters["from"]
-                val to = call.request.queryParameters["to"]
-                val departDate = call.request.queryParameters["departDate"]
-                val passengers = call.request.queryParameters["passengers"]
+    //     routing {
+    //         // So it also gets the files from 'app/src/main/resources/static' the static folder
+    //         staticResources("/", "static")
 
-                call.respondText(
-                    """
-                    {
-                    "from": "$from",
-                    "to": "$to",
-                    "departDate": "$departDate",
-                    "passengers": "$passengers"
-                    }
-                    """.trimIndent(),
-                    contentType = io.ktor.http.ContentType.Application.Json
-                )
-            }
+    //         get("/") {
+    //             call.respondRedirect("/home.html")
+    //         }
 
-            get("/search") {
-                call.respondRedirect("/search.html")
-            }
+    //         get("/flights") {
+    //             val from = call.request.queryParameters["from"]
+    //             val to = call.request.queryParameters["to"]
+    //             val departDate = call.request.queryParameters["departDate"]
+    //             val passengers = call.request.queryParameters["passengers"]
 
-            get("/report") {
-                call.respondRedirect("/report.html")
-            }
+    //             call.respondText(
+    //                 """
+    //                 {
+    //                 "from": "$from",
+    //                 "to": "$to",
+    //                 "departDate": "$departDate",
+    //                 "passengers": "$passengers"
+    //                 }
+    //                 """.trimIndent(),
+    //                 contentType = io.ktor.http.ContentType.Application.Json
+    //             )
+    //         }
 
-            get("/management") {
-                call.respondRedirect("/management.html")
-                }
-        }
+    //         get("/search") {
+    //             call.respondRedirect("/search.html")
+    //         }
 
-    }.start(wait = true)
+    //         get("/report") {
+    //             call.respondRedirect("/report.html")
+    //         }
+
+    //         get("/management") {
+    //             call.respondRedirect("/management.html")
+    //             }
+    //     }
+
+    // }.start(wait = true)
 }

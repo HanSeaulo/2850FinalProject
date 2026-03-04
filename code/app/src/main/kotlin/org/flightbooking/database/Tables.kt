@@ -7,7 +7,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
 const val MAX_STRING_LENGTH = 255
 
 object ReportsTable : Table("Reports") {
-    val id = integer("report_id").autoIncrement()
+    val id = integer("id").autoIncrement()
     val generatedAt = datetime("generated_at")
     val reportType = varchar("report_type", MAX_STRING_LENGTH)
 
@@ -15,7 +15,7 @@ object ReportsTable : Table("Reports") {
 }
 
 object UsersTable : Table("Users") {
-    val id = integer("user_id").autoIncrement()
+    val id = integer("id").autoIncrement()
     val name = varchar("name", MAX_STRING_LENGTH)
     val email = varchar("email", MAX_STRING_LENGTH).uniqueIndex()
     val role = varchar("role", MAX_STRING_LENGTH)
@@ -26,7 +26,7 @@ object UsersTable : Table("Users") {
 }
 
 object FlightsTable : Table("Flights" ) {
-    val id = integer("flight_id").autoIncrement()
+    val id = integer("id").autoIncrement()
     val flightNumber = varchar("flight_number", MAX_STRING_LENGTH)
     val departureAirport = varchar("departure_airport", MAX_STRING_LENGTH)
     val arrivalAirport = varchar("arrival_airport", MAX_STRING_LENGTH)
@@ -41,7 +41,7 @@ object FlightsTable : Table("Flights" ) {
 }
 
 object BookingsTable : Table("Bookings") {
-    val id = integer("bookings_id").autoIncrement()
+    val id = integer("id").autoIncrement()
     val userId = integer("user_id").references(UsersTable.id)
     val flightId = integer("flight_id").references(FlightsTable.id)
     val status = varchar("status", MAX_STRING_LENGTH)
@@ -52,7 +52,7 @@ object BookingsTable : Table("Bookings") {
 }
 
 object PassengersTable : Table("Passengers") {
-    val id = integer("passengers_id").autoIncrement()
+    val id = integer("id").autoIncrement()
     val bookingId = integer("booking_id").references(BookingsTable.id)
     val firstName = varchar("first_name", MAX_STRING_LENGTH)
     val lastName = varchar("last_name", MAX_STRING_LENGTH)
@@ -62,10 +62,10 @@ object PassengersTable : Table("Passengers") {
 }
 
 object RequestsTable : Table("Requests") {
-    val id = integer("requests_id").autoIncrement()
+    val id = integer("id").autoIncrement()
     val bookingId = integer("booking_id").references(BookingsTable.id)
     val type = varchar("type", MAX_STRING_LENGTH)
-    val status = varchar("first_name", MAX_STRING_LENGTH)
+    val status = varchar("status", MAX_STRING_LENGTH)
     val createdAt = datetime("created_at")
     val processedAt = datetime("processed_at")
 
