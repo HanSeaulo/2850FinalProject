@@ -54,6 +54,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("org.xerial:sqlite-jdbc:3.50.2.0")
 
+    implementation("org.xerial:sqlite-jdbc:3.46.1.0")
+
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
