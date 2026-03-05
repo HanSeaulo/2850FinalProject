@@ -12,6 +12,24 @@ import io.ktor.server.http.content.*
 import database.DBFactory
 import access.FlightAccess
 
+import database.DBFactory
+import access.FlightAccess
+
+fun FlightsTest() {
+    println("Establishing DB Connection...")
+    DBFactory.init()
+    println("Connection successful")
+
+    val flightAccess = FlightAccess()
+    val getall = flightAccess.searchFlights("LHR", "JFK")
+    //val getall = flightAccess.getAll()
+
+    println("All data in flights table: ")
+    println(getall.joinToString())
+
+
+}
+
 fun main() {
     embeddedServer(Netty, port = 8080) {
 

@@ -8,10 +8,14 @@ import tables.*
 
 object DBFactory {
     fun init() {
+        // Use absolute path based on project structure
+        val dbPath = "/workspaces/2850FinalProject/code/app/src/main/kotlin/org/flightbooking/database/resources/Database.db"
+        
         Database.connect(
-            url = "jdbc:sqlite:code/app/src/main/kotlin/org/flightbooking/database/resources/Database.db",
+            url = "jdbc:sqlite:$dbPath",
             driver = "org.sqlite.JDBC"
         )
+    
 
         println("Checking if tables exist...")
         transaction {
