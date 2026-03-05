@@ -9,6 +9,8 @@ import io.ktor.server.routing.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.http.content.*
+import database.DBFactory
+import access.FlightAccess
 
 fun main() {
     embeddedServer(Netty, port = 8080) {
@@ -16,6 +18,8 @@ fun main() {
         install(ContentNegotiation) {
             json()
         }
+
+        DBFactory.init()
 
         routing {
             // So it also gets the files from 'app/src/main/resources/static' the static folder
@@ -25,27 +29,17 @@ fun main() {
                 call.respondRedirect("/home.html")
             }
 
-            get("/flights") {
-                val from = call.request.queryParameters["from"]
-                val to = call.request.queryParameters["to"]
-                val departDate = call.request.queryParameters["departDate"]
-                val passengers = call.request.queryParameters["passengers"]
-
-                call.respondText(
-                    """
-                    {
-                    "from": "$from",
-                    "to": "$to",
-                    "departDate": "$departDate",
-                    "passengers": "$passengers"
-                    }
-                    """.trimIndent(),
-                    contentType = io.ktor.http.ContentType.Application.Json
-                )
-            }
 
             get("/search") {
                 call.respondRedirect("/search.html")
+            }
+            
+            get("/flights") {
+                val flights = FlightAccess().getAll()
+                val json = flights.joinToString(prefix = "[", postfix = "]") { f ->
+                    """{"flightNumber":"${f.flightNumber}","from":"${f.departureAirport}","to":"${f.arrivalAirport}","price":${f.price}}"""
+                }
+                call.respondText(json, ContentType.Application.Json)
             }
 
             get("/report") {

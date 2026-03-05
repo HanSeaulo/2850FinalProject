@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
     implementation(libs.h2)
+    implementation("org.xerial:sqlite-jdbc:3.46.0.0")
     
     // exposed
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
