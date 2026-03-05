@@ -2,15 +2,72 @@ package access
 
 import models.Flights
 import tables.FlightsTable
+import models.Users
+import tables.UsersTable
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.jdbc.*
 
 import kotlinx.datetime.LocalDateTime
+
+
+class UserAccess {
+
+    fun createUser(name: String, email: String, password: String, role: String): Boolean {
+        if (checkEmail(email) == true) {
+            return false
+        }
+        transaction {
+            UsersTable.insert {
+                it[UsersTable.name] = name
+                it[UsersTable.email] = email
+                it[UsersTable.password] = password
+                it[UsersTable.role] = role
+            }
+        }
+        return true
+    }
+
+    //check if email already exists in database
+    fun checkEmail(email: String): Boolean {
+        return transaction {
+            UsersTable.selectAll()
+                .where { UsersTable.email eq email }
+                .any()
+        }
+    }
+    
+    fun checkLogin(email: String, password: String): Boolean {
+        return transaction {
+            UsersTable.selectAll().where { 
+                (UsersTable.email eq email) and 
+                (UsersTable.password eq password) 
+            }.limit(1).empty().not()
+        }
+    }
+        
+    
+
+
+    // fun constructUsers(it: ResultRow): Users {
+    //     return Users (
+    //         id = it[UsersTable.id],
+    //         name = it[UsersTable.name],
+    //         email = it[UsersTable.email],
+    //         role = it[UsersTable.role],
+    //         password = it[UsersTable.password],
+    //         createdAt = it[UsersTable.createdAt]
+    //     )
+    // }
+}
+
+
 
 class FlightAccess {
     

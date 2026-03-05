@@ -10,10 +10,11 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.http.content.*
 import database.DBFactory
-import access.FlightAccess
+import access.*
 
-import database.DBFactory
-import access.FlightAccess
+import io.ktor.server.request.receiveParameters
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.response.respondText
 
 fun FlightsTest() {
     println("Establishing DB Connection...")
@@ -30,16 +31,6 @@ fun FlightsTest() {
 
 }
 
-import io.ktor.server.request.receiveParameters
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.response.respondText
-
-
-import org.flightbooking.database.UserAccess
-import org.flightbooking.database.DBFactory
-
-
-
 fun main() {
     embeddedServer(Netty, port = 8080) {
         DBFactory.init()
@@ -47,8 +38,6 @@ fun main() {
         install(ContentNegotiation) {
             json()
         }
-
-        DBFactory.init()
 
         routing {
             // So it also gets the files from 'app/src/main/resources/static' the static folder
@@ -88,7 +77,7 @@ fun main() {
                 // role from form (or default)
                 val role = params["role"] ?: "user"
 
-                val ok = UserAccess.createUser(name, email, password, role)
+                val ok = UserAccess().createUser(name, email, password, role)
 
                 if (ok) {
                 // simplest: redirect user to login page
@@ -105,7 +94,7 @@ fun main() {
             val email = params["email"] ?: return@post call.respondText("Missing email", status = HttpStatusCode.BadRequest)
             val password = params["password"] ?: return@post call.respondText("Missing password", status = HttpStatusCode.BadRequest)
 
-            val ok = UserAccess.checkLogin(email, password)
+            val ok = UserAccess().checkLogin(email, password)
 
             if (ok) {
                 call.respondText("Login successful. Go to /home.html", status = HttpStatusCode.OK)
