@@ -53,6 +53,10 @@ fun main() {
             }
             
             get("/flights") {
+                call.respondRedirect("/flights.html")
+            }
+
+            get("/api/flights") {
                 val flights = FlightAccess().getAll()
                 val json = flights.joinToString(prefix = "[", postfix = "]") { f ->
                     """{"flightNumber":"${f.flightNumber}","from":"${f.departureAirport}","to":"${f.arrivalAirport}","price":${f.price}}"""
