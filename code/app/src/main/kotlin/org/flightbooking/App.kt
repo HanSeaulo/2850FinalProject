@@ -27,8 +27,6 @@ fun FlightsTest() {
 
     println("All data in flights table: ")
     println(getall.joinToString())
-
-
 }
 
 fun main() {
@@ -46,7 +44,6 @@ fun main() {
             get("/") {
                 call.respondRedirect("/home.html")
             }
-
 
             get("/search") {
                 call.respondRedirect("/search.html")
@@ -66,7 +63,8 @@ fun main() {
 
             get("/management") {
                 call.respondRedirect("/management.html")
-                }
+            }
+
             post("/signup") {
                 val params = call.receiveParameters()
 
@@ -74,36 +72,32 @@ fun main() {
                 val email = params["email"] ?: return@post call.respondText("Missing email", status = HttpStatusCode.BadRequest)
                 val password = params["password"] ?: return@post call.respondText("Missing password", status = HttpStatusCode.BadRequest)
 
-                // role from form (or default)
                 val role = params["role"] ?: "user"
 
                 val ok = UserAccess().createUser(name, email, password, role)
 
                 if (ok) {
-                // simplest: redirect user to login page
-                call.respondText("Signup successful. Go to /login.html", status = HttpStatusCode.Created)
-                // better UX later: respondRedirect("/login.html")
+                    call.respondRedirect("/login.html")
                 } else {
                     call.respondText("Email already exists", status = HttpStatusCode.Conflict)
                 }
             }
 
-        post("/login") {
-            val params = call.receiveParameters()
+            post("/login") {
+                val params = call.receiveParameters()
 
-            val email = params["email"] ?: return@post call.respondText("Missing email", status = HttpStatusCode.BadRequest)
-            val password = params["password"] ?: return@post call.respondText("Missing password", status = HttpStatusCode.BadRequest)
+                val email = params["email"] ?: return@post call.respondText("Missing email", status = HttpStatusCode.BadRequest)
+                val password = params["password"] ?: return@post call.respondText("Missing password", status = HttpStatusCode.BadRequest)
 
-            val ok = UserAccess().checkLogin(email, password)
+                val ok = UserAccess().checkLogin(email, password)
 
-            if (ok) {
-                call.respondText("Login successful. Go to /home.html", status = HttpStatusCode.OK)
-                // better UX later: respondRedirect("/home.html")
-            } else {
-                call.respondText("Invalid email or password", status = HttpStatusCode.Unauthorized)
+                if (ok) {
+                    call.respondRedirect("/home.html")
+                } else {
+                    call.respondText("Invalid email or password", status = HttpStatusCode.Unauthorized)
+                }
             }
         }
-             }
 
     }.start(wait = true)
 }
