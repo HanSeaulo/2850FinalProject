@@ -26,8 +26,12 @@ data class Flights(
     val departureTime: LocalDateTime,
     val arrivalTime: LocalDateTime,
     val price: Double, 
-    val totalSeats: Int,
+    val totalSeats: Int, 
     val availableSeats: Int,
+    val totalSeatsEconomy: Int,
+    val availableSeatsEconomy: Int,
+    val totalSeatsBusiness: Int,
+    val availableSeatsBusiness: Int,
     val createdAt: LocalDateTime
 )
 

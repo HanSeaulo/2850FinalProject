@@ -35,6 +35,10 @@ object FlightsTable : Table("Flights" ) {
     val price = double("price")
     val totalSeats = integer("total_seats")
     val availableSeats = integer("available_seats")
+    val totalSeatsEconomy = integer("total_seats_economy")
+    val availableSeatsEconomy = integer("available_seats_economy")
+    val totalSeatsBusiness = integer("total_seats_business")
+    val availableSeatsBusiness = integer("available_seats_business")
     val createdAt = datetime("created_at")
 
     override val primaryKey = PrimaryKey(id)

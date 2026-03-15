@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.jdbc.*
@@ -77,12 +78,36 @@ class FlightAccess {
         }
     }
 
-    fun searchFlights(from: String, to: String): List<Flights> = transaction {
-        FlightsTable.selectAll().where { (FlightsTable.departureAirport eq from) and 
-        (FlightsTable.arrivalAirport eq to) }.map {
-            constructFlight(it)
+    fun searchFlights(from: String, to: String, departTime: LocalDateTime, passengers: Int, cabinClass: String): List<Flights>? {
+        if (cabinClass == "Economy"){
+            val result: List<Flights> = transaction {
+            FlightsTable.selectAll().where { 
+                (FlightsTable.departureAirport eq from) and 
+                (FlightsTable.arrivalAirport eq to) and
+                (FlightsTable.departureTime greaterEq departTime) and
+                (FlightsTable.availableSeatsEconomy greaterEq passengers)
+                }.map {
+                constructFlight(it)
+                }
+            }
+            return result
         }
-    }
+        if (cabinClass == "Business"){
+            val result: List<Flights> = transaction {
+            FlightsTable.selectAll().where { 
+                (FlightsTable.departureAirport eq from) and 
+                (FlightsTable.arrivalAirport eq to) and
+                (FlightsTable.departureTime greaterEq departTime) and 
+                (FlightsTable.availableSeatsBusiness greaterEq passengers)
+                }.map {
+                constructFlight(it)
+                }
+            }
+            return result
+        }
+
+        return null 
+    } 
 
 
     fun constructFlight(it: ResultRow): Flights {
@@ -96,6 +121,10 @@ class FlightAccess {
             price = it[FlightsTable.price],
             totalSeats = it[FlightsTable.totalSeats],
             availableSeats = it[FlightsTable.availableSeats], 
+            totalSeatsEconomy = it[FlightsTable.totalSeatsEconomy],
+            availableSeatsEconomy = it[FlightsTable.availableSeatsEconomy], 
+            totalSeatsBusiness = it[FlightsTable.totalSeatsBusiness],
+            availableSeatsBusiness = it[FlightsTable.availableSeatsBusiness], 
             createdAt = it[FlightsTable.createdAt] 
         )
     }
