@@ -29,7 +29,7 @@ fun FlightsTest() {
 
     println("All data in flights table: ")
     println(getall?.joinToString() ?: "No flights found")
-    println(getall.joinToString())
+    //println(getall.joinToString())
 }
 
 fun main() {
