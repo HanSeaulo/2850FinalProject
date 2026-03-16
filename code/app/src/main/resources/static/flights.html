@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flights</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">✈ Go Fly</div>
+      <div>
+        <a href="/home.html">Home</a>
+        <a href="/booking.html">View Bookings</a>
+        <a href="/login.html">Sign In</a>
+        <a href="/management.html">Management</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container page">
+    <h1 class="page-title">Available Flights</h1>
+    <p class="page-subtitle">Select a flight to continue to payment</p>
+
+    <div id="flightsList"></div>
+  </div>
+
+  <script>
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function selectFlight(flightNumber) {
+      window.location.href = "/payments.html?flight=" + encodeURIComponent(flightNumber);
+    }
+
+    async function loadFlights() {
+      const container = document.getElementById("flightsList");
+      container.innerHTML = `<div class="stat-card">Loading flights...</div>`;
+
+      try {
+        const response = await fetch("/api/flights");
+
+        if (!response.ok) {
+          throw new Error("Failed to load flights");
+        }
+
+        const flights = await response.json();
+
+        if (!flights.length) {
+          container.innerHTML = `<div class="stat-card">No flights available right now.</div>`;
+          return;
+        }
+
+        container.innerHTML = flights.map(f => `
+          <div class="flight-result-card">
+            <div class="flight-left">
+              <div class="flight-route">
+                <span>${escapeHtml(f.from)}</span>
+                <span class="flight-route-icon"> →   ✈   → </span>
+                <span>${escapeHtml(f.to)}</span>
+              </div>
+
+              <div class="flight-number-small">
+                Flight ${escapeHtml(f.flightNumber)}
+              </div>
+            </div>
+
+            <div class="flight-right">
+              <div class="flight-price-big">$${Number(f.price).toFixed(2)}</div>
+
+              <button class="btn-find" onclick="selectFlight('${encodeURIComponent(f.flightNumber)}')">
+                Select Flight
+              </button>
+            </div>
+          </div>
+        `).join("");
+      } catch (error) {
+        container.innerHTML = `<div class="stat-card">Could not load flights right now.</div>`;
+        console.error(error);
+      }
+    }
+
+    loadFlights();
+  </script>
+</body>
+</html>
