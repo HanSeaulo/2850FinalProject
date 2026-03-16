@@ -408,3 +408,28 @@ body::before,
   }
 }
 
+.flight-result-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+}
+
+.flight-left {
+  flex: 1;
+}
+
+.flight-middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.flight-right {
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 20px;
+}

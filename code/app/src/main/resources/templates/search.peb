@@ -39,21 +39,21 @@
         <div class="input-row">
           <div>
             <label>From</label>
-            <input type="text" name="from" list="from-airports" placeholder="Select airport" required>
-            <datalist id="from-airports">
+            <select name="from" required>
+              <option value="">Select airport</option>
               {% for airport in airports %}
-                <option value="{{ airport }}">
+                <option value="{{ airport }}">{{ airport }}</option>
               {% endfor %}
-            </datalist>
+            </select>
           </div>
           <div>
             <label>To</label>
-            <input type="text" name="to" list="to-airports" placeholder="Select airport" required>
-            <datalist id="to-airports">
+            <select name="to" required>
+              <option value="">Select airport</option>
               {% for airport in airports %}
-                <option value="{{ airport }}">
+                <option value="{{ airport }}">{{ airport }}</option>
               {% endfor %}
-            </datalist>
+            </select>
           </div>
         </div>
 
