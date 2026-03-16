@@ -15,21 +15,26 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.jdbc.*
 
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.LocalDateTime
 
 
 class UserAccess {
 
     fun createUser(name: String, email: String, password: String, role: String): Boolean {
-        if (checkEmail(email) == true) {
+        if (checkEmail(email)) {
             return false
         }
+
         transaction {
             UsersTable.insert {
                 it[UsersTable.name] = name
                 it[UsersTable.email] = email
                 it[UsersTable.password] = password
                 it[UsersTable.role] = role
+                it[UsersTable.createdAt] = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             }
         }
         return true
@@ -46,15 +51,12 @@ class UserAccess {
     
     fun checkLogin(email: String, password: String): Boolean {
         return transaction {
-            UsersTable.selectAll().where { 
-                (UsersTable.email eq email) and 
-                (UsersTable.password eq password) 
+            UsersTable.selectAll().where {
+                (UsersTable.email eq email) and
+                (UsersTable.password eq password)
             }.limit(1).empty().not()
         }
     }
-        
-    
-
 
     // fun constructUsers(it: ResultRow): Users {
     //     return Users (
