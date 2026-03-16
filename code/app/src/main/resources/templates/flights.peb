@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flights</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">✈ Go Fly</div>
+      <div>
+        <a href="/home.html">Home</a>
+        <a href="/booking.html">View Bookings</a>
+        <a href="/login.html">Sign In</a>
+        <a href="/management.html">Management</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container page">
+    <h1 class="page-title">Available Flights</h1>
+    <p class="page-subtitle">Select a flight to continue to payment</p>
+
+    {% if error %}
+      <div class="stat-card">
+        {{ error }}
+      </div>
+    {% elseif flights is empty %}
+      <div class="stat-card">
+        No flights available right now.
+      </div>
+    {% else %}
+      {% for f in flights %}
+        <div class="flight-result-card">
+          <div class="flight-left">
+            <div class="flight-route">
+              <span>{{ f.departureAirport }}</span>
+              <span class="flight-route-icon"> → ✈ → </span>
+              <span>{{ f.arrivalAirport }}</span>
+            </div>
+
+            <div class="flight-number-small">
+              Flight {{ f.flightNumber }}
+            </div>
+          </div>
+
+          <div class="flight-middle">
+            <div class="flight-number-small">
+              <strong>Departure:</strong> {{ f.departureTime }}
+            </div>
+
+            <div class="flight-number-small">
+              <strong>Arrival:</strong> {{ f.arrivalTime }}
+            </div>
+
+            <div class="flight-number-small">
+              <strong>Economy seats:</strong> {{ f.availableSeatsEconomy }}
+            </div>
+
+            <div class="flight-number-small">
+              <strong>Business seats:</strong> {{ f.availableSeatsBusiness }}
+            </div>
+          </div>
+
+          <div class="flight-right">
+            <div class="flight-price-big">£{{ f.price }}</div>
+
+            <a href="/payments.html?flight={{ f.flightNumber }}" class="btn-find">
+              Select Flight
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+</body>
+</html>

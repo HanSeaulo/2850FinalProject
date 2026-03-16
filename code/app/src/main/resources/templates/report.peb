@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report - Go Fly</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">✈ Go Fly</div>
+      <div>
+        <a href="/home.html">Home</a>
+        <a href="/booking.html">View Bookings</a>
+        <a href="/login.html">Sign In</a>
+        <a href="/management.html">Management</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="hero">
+    <div class="search-wrapper">
+      <h2>Report an Issue</h2>
+
+      <form action="/report" method="post">
+
+        <div class="input-row">
+          <div>
+            <label>Reference</label>
+            <input type="text" name="bookingRef" placeholder="e.g. GF12345" required>
+          </div>
+
+          <div>
+            <label>Issue Type</label>
+            <select name="issueType" required>
+              <option value="">Select one</option>
+              <option>Booking</option>
+              <option>Payment</option>
+              <option>Account</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <label style="display:block;margin-bottom:8px;">Description</label>
+          <textarea
+            name="details"
+            rows="5"
+            style="width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.95);color:#0f172a;"
+            placeholder="Describe the issue here..."
+            required
+          ></textarea>
+        </div>
+
+        <div class="submit-area">
+          <button class="btn-find" type="submit">Submit Report</button>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+</body>
+</html>

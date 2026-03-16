@@ -78,6 +78,20 @@ class FlightAccess {
         }
     }
 
+    // function to get all the valid airport names in teh database so you dont have to type them -Hanan
+    fun getAirportCodes(): List<String> {
+        val result: List<String> = transaction {
+            val airports = mutableListOf<String>()
+            val rows = FlightsTable.selectAll()
+            for (row in rows) {
+                airports.add(row[FlightsTable.departureAirport])
+                airports.add(row[FlightsTable.arrivalAirport])
+            }
+            airports.distinct().sorted()
+        }
+        return result
+    }
+
     fun searchFlights(from: String, to: String, departTime: LocalDateTime, passengers: Int, cabinClass: String): List<Flights>? {
         if (cabinClass == "Economy"){
             val result: List<Flights> = transaction {

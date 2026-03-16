@@ -40,6 +40,10 @@ dependencies {
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
 
+    // for pebble
+    implementation("io.ktor:ktor-server-pebble:2.3.12")
+    implementation("ch.qos.logback:logback-classic:1.4.14")
+
     //database 
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
