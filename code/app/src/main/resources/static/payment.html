@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="brand">
+        <h1>Payment</h1>
+        <p>Review your fare and complete your booking.</p>
+      </div>
+
+      <form class="auth-form" action="/payment" method="post">
+        <input type="hidden" id="flight-id" name="flightId" />
+
+        <label for="seat-price-display">Seat price</label>
+        <input id="seat-price-display" type="text" value="Loading..." readonly />
+
+        <label for="luggage">Select luggage</label>
+        <select id="luggage" name="luggage" required>
+          <option value="" disabled selected>Select luggage</option>
+          <option value="none">No extra luggage ($0)</option>
+          <option value="10kg">Small (10 kg) — $30</option>
+          <option value="23kg">Big (23 kg) — $60</option>
+        </select>
+
+        <label for="luggage-price-display">Luggage price</label>
+        <input id="luggage-price-display" type="text" value="$0" readonly />
+
+        <label for="total-price-display">Total price</label>
+        <input id="total-price-display" type="text" value="Loading..." readonly />
+
+        <input type="hidden" id="seat-price" name="seatPrice" />
+        <input type="hidden" id="luggage-price" name="luggagePrice" />
+        <input type="hidden" id="total-price" name="totalPrice" />
+
+        <label for="card-name">Cardholder Name</label>
+        <input type="text" id="card-name" name="cardName" placeholder="Enter cardholder name" required />
+
+        <label for="card-number">Card Number</label>
+        <input type="text" id="card-number" name="cardNumber" placeholder="1234 5678 9012 3456" required />
+
+        <label for="expiry-date">Expiry Date</label>
+        <input type="text" id="expiry-date" name="expiryDate" placeholder="MM/YY" required />
+
+        <label for="cvv">CVV</label>
+        <input type="password" id="cvv" name="cvv" placeholder="123" required />
+
+        <button type="submit" class="primary">Pay Now</button>
+      </form>
+
+      <p class="footer-text">
+        Need to change your booking?
+        <a class="link" href="/search.html">Go back</a>
+      </p>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const flightId = params.get("flightId");
+
+    const flightIdInput = document.getElementById("flight-id");
+    const seatPriceDisplay = document.getElementById("seat-price-display");
+    const luggageSelect = document.getElementById("luggage");
+    const luggagePriceDisplay = document.getElementById("luggage-price-display");
+    const totalPriceDisplay = document.getElementById("total-price-display");
+
+    const seatPriceHidden = document.getElementById("seat-price");
+    const luggagePriceHidden = document.getElementById("luggage-price");
+    const totalPriceHidden = document.getElementById("total-price");
+
+    let seatPrice = 0;
+
+    flightIdInput.value = flightId || "";
+
+    function getLuggagePrice(value) {
+      if (value === "10kg") return 30;
+      if (value === "23kg") return 60;
+      return 0;
+    }
+
+    function updateTotal() {
+      const luggagePrice = getLuggagePrice(luggageSelect.value);
+      const total = seatPrice + luggagePrice;
+
+      luggagePriceDisplay.value = `$${luggagePrice.toFixed(2)}`;
+      totalPriceDisplay.value = `$${total.toFixed(2)}`;
+
+      seatPriceHidden.value = seatPrice.toString();
+      luggagePriceHidden.value = luggagePrice.toString();
+      totalPriceHidden.value = total.toString();
+    }
+
+    if (flightId) {
+      fetch(`/flight-price?flightId=${flightId}`)
+        .then(response => response.json())
+        .then(data => {
+          seatPrice = Number(data.price) || 0;
+          seatPriceDisplay.value = `$${seatPrice.toFixed(2)}`;
+          updateTotal();
+        })
+        .catch(() => {
+          seatPriceDisplay.value = "Price unavailable";
+          totalPriceDisplay.value = "Price unavailable";
+        });
+    } else {
+      seatPriceDisplay.value = "No flight selected";
+      totalPriceDisplay.value = "No flight selected";
+    }
+
+    luggageSelect.addEventListener("change", updateTotal);
+  </script>
+</body>
+</html>

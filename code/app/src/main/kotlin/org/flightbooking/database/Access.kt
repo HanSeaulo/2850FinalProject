@@ -19,7 +19,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.LocalDateTime
 
-
 class UserAccess {
 
     fun createUser(name: String, email: String, password: String, role: String): Boolean {
@@ -39,7 +38,6 @@ class UserAccess {
         return true
     }
 
-    //check if email already exists in database
     fun checkEmail(email: String): Boolean {
         return transaction {
             UsersTable.selectAll()
@@ -47,7 +45,7 @@ class UserAccess {
                 .any()
         }
     }
-    
+
     fun checkLogin(email: String, password: String): Boolean {
         return transaction {
             UsersTable.selectAll().where {
@@ -57,22 +55,34 @@ class UserAccess {
         }
     }
 
-    // fun constructUsers(it: ResultRow): Users {
-    //     return Users (
-    //         id = it[UsersTable.id],
-    //         name = it[UsersTable.name],
-    //         email = it[UsersTable.email],
-    //         role = it[UsersTable.role],
-    //         password = it[UsersTable.password],
-    //         createdAt = it[UsersTable.createdAt]
-    //     )
-    // }
+    fun getUserByEmail(email: String): Users? {
+        return transaction {
+            UsersTable.selectAll()
+                .where { UsersTable.email eq email }
+                .map {
+                    Users(
+                        id = it[UsersTable.id],
+                        name = it[UsersTable.name],
+                        email = it[UsersTable.email],
+                        role = it[UsersTable.role],
+                        password = it[UsersTable.password],
+                        createdAt = it[UsersTable.createdAt]
+                    )
+                }
+                .singleOrNull()
+        }
+    }
 }
 
-
-
 class FlightAccess {
-    
+
+    fun getFlightById(id: Int): Flights? = transaction {
+        FlightsTable.selectAll()
+            .where { FlightsTable.id eq id }
+            .map { constructFlight(it) }
+            .singleOrNull()
+    }
+
     fun getAll(): List<Flights> = transaction {
         FlightsTable.selectAll().map {
             constructFlight(it)
@@ -80,15 +90,16 @@ class FlightAccess {
     }
 
     fun searchFlights(from: String, to: String): List<Flights> = transaction {
-        FlightsTable.selectAll().where { (FlightsTable.departureAirport eq from) and 
-        (FlightsTable.arrivalAirport eq to) }.map {
+        FlightsTable.selectAll().where {
+            (FlightsTable.departureAirport eq from) and
+            (FlightsTable.arrivalAirport eq to)
+        }.map {
             constructFlight(it)
         }
     }
 
-
     fun constructFlight(it: ResultRow): Flights {
-        return Flights (
+        return Flights(
             id = it[FlightsTable.id],
             flightNumber = it[FlightsTable.flightNumber],
             departureAirport = it[FlightsTable.departureAirport],
@@ -97,9 +108,8 @@ class FlightAccess {
             arrivalTime = it[FlightsTable.arrivalTime],
             price = it[FlightsTable.price],
             totalSeats = it[FlightsTable.totalSeats],
-            availableSeats = it[FlightsTable.availableSeats], 
-            createdAt = it[FlightsTable.createdAt] 
+            availableSeats = it[FlightsTable.availableSeats],
+            createdAt = it[FlightsTable.createdAt]
         )
     }
-
 }

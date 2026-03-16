@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Log In</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <main class="auth-page">
@@ -14,7 +14,6 @@
         <p>Access your bookings, manage flights, and get receipts.</p>
       </div>
 
-      <!-- action can be /login later -->
       <form class="auth-form" action="/login" method="post">
         <label for="email">Email</label>
         <input id="email" name="email" type="email" placeholder="you@example.com" required />
@@ -23,8 +22,7 @@
         <input id="password" name="password" type="password" placeholder="Your password" required />
 
         <div class="row">
-
-          <a class="link" href="forgot.html">Forgot password?</a>
+          <a class="link" href="/forgot.html">Forgot password?</a>
         </div>
 
         <button type="submit" class="primary">Log In</button>
@@ -32,9 +30,8 @@
 
       <p class="footer-text">
         Don’t have an account?
-        <a class="link" href="signup.html">Sign up</a>
+        <a class="link" href="/signup.html">Sign up</a>
       </p>
-
     </div>
   </main>
 </body>
