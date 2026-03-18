@@ -26,6 +26,8 @@ dependencies {
 
     // for pebble
     implementation("io.ktor:ktor-server-pebble:2.3.12")
+
+    // this logs when ./gradlew run is entered, commenting is in option if do not want a lot of text on terminal during gradle run
     implementation("ch.qos.logback:logback-classic:1.4.14")
 
     //database 
