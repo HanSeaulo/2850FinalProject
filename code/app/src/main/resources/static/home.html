@@ -17,7 +17,7 @@
       <nav>
         <a href="/">Home</a>
         <a href="/booking.html">View Bookings</a>
-        <a href="/login.html">Sign In</a>
+        <a href="/login" id="signin-link">Sign In</a>
         <a href="/management.html">Management</a>
       </nav>
     </div>
@@ -46,6 +46,17 @@
 </main>
 
 <script>
+  fetch("/current-user")
+    .then(response => response.text())
+    .then(name => {
+      if (name && name.trim() !== "") {
+        const signInLink = document.getElementById("signin-link");
+        if (signInLink) {
+          signInLink.textContent = name;
+          signInLink.href = "/logout";
+        }
+      }
+    });
   const images = ["/bg/bg1.jpeg", "/bg/bg2.jpeg", "/bg/bg3.jpeg"];
 
   let index = 0;

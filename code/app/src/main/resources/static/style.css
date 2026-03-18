@@ -337,6 +337,7 @@ body::before,
 .hero::before {
   pointer-events: none;
 }
+<<<<<<< HEAD
 
 .flight-result-card {
   background: var(--card);
@@ -352,11 +353,64 @@ body::before,
 }
 
 .flight-left {
+=======
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(180deg, #0d2a66 0%, #1d469a 100%);
+  color: white;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(15, 35, 85, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 36px;
+  box-sizing: border-box;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.brand {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.brand h1 {
+  margin: 0 0 10px 0;
+  font-size: 42px;
+  font-weight: 700;
+}
+
+.brand p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 18px;
+}
+
+.auth-form {
+>>>>>>> branch-name
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
+<<<<<<< HEAD
 .flight-route {
   font-size: 2rem;
   font-weight: 800;
@@ -408,3 +462,59 @@ body::before,
   }
 }
 
+=======
+.auth-form label {
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 12px;
+  box-sizing: border-box;
+  background: rgba(220, 228, 245, 0.95);
+  color: #1a2b55;
+  font-size: 16px;
+}
+
+.row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.link {
+  color: #9fc2ff;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.primary {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 14px;
+  background: #2d69ff;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary:hover {
+  background: #2459db;
+}
+
+.footer-text {
+  text-align: center;
+  margin-top: 20px;
+  color: rgba(255, 255, 255, 0.85);
+}
+>>>>>>> branch-name
