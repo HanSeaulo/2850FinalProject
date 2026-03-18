@@ -337,7 +337,6 @@ body::before,
 .hero::before {
   pointer-events: none;
 }
-<<<<<<< HEAD
 
 .flight-result-card {
   background: var(--card);
@@ -353,7 +352,6 @@ body::before,
 }
 
 .flight-left {
-=======
 html, body {
   margin: 0;
   padding: 0;
@@ -404,7 +402,6 @@ body {
 }
 
 .auth-form {
->>>>>>> branch-name
   display: flex;
   flex-direction: column;
   gap: 12px;
