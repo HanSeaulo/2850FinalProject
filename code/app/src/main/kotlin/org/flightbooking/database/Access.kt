@@ -1,31 +1,19 @@
 package access
 
 import models.Flights
-import tables.FlightsTable
 import models.Users
+import tables.FlightsTable
 import tables.UsersTable
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.select
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.jetbrains.exposed.v1.core.like
-import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.greaterEq
-import org.jetbrains.exposed.v1.core.ResultRow
-import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.jdbc.*
-
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.LocalDateTime
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.core.*
+import kotlinx.datetime.*
+import org.jetbrains.exposed.v1.core.ResultRow
 
 class UserAccess {
 
     fun createUser(name: String, email: String, password: String, role: String): Boolean {
-        if (checkEmail(email)) {
-            return false
-        }
+        if (checkEmail(email)) return false
 
         transaction {
             UsersTable.insert {
@@ -39,39 +27,30 @@ class UserAccess {
         return true
     }
 
-    fun checkEmail(email: String): Boolean {
-        return transaction {
-            UsersTable.selectAll()
-                .where { UsersTable.email eq email }
-                .any()
-        }
+    fun checkEmail(email: String): Boolean = transaction {
+        UsersTable.selectAll().where { UsersTable.email eq email }.any()
     }
 
-    fun checkLogin(email: String, password: String): Boolean {
-        return transaction {
-            UsersTable.selectAll().where {
-                (UsersTable.email eq email) and
-                (UsersTable.password eq password)
-            }.limit(1).empty().not()
-        }
+    fun checkLogin(email: String, password: String): Boolean = transaction {
+        UsersTable.selectAll().where {
+            (UsersTable.email eq email) and
+            (UsersTable.password eq password)
+        }.limit(1).empty().not()
     }
 
-    fun getUserByEmail(email: String): Users? {
-        return transaction {
-            UsersTable.selectAll()
-                .where { UsersTable.email eq email }
-                .map {
-                    Users(
-                        id = it[UsersTable.id],
-                        name = it[UsersTable.name],
-                        email = it[UsersTable.email],
-                        role = it[UsersTable.role],
-                        password = it[UsersTable.password],
-                        createdAt = it[UsersTable.createdAt]
-                    )
-                }
-                .singleOrNull()
-        }
+    fun getUserByEmail(email: String): Users? = transaction {
+        UsersTable.selectAll().where { UsersTable.email eq email }
+            .map {
+                Users(
+                    id = it[UsersTable.id],
+                    name = it[UsersTable.name],
+                    email = it[UsersTable.email],
+                    role = it[UsersTable.role],
+                    password = it[UsersTable.password],
+                    createdAt = it[UsersTable.createdAt]
+                )
+            }
+            .singleOrNull()
     }
 }
 
@@ -85,64 +64,58 @@ class FlightAccess {
     }
 
     fun getAll(): List<Flights> = transaction {
-        FlightsTable.selectAll().map {
-            constructFlight(it)
-        }
+        FlightsTable.selectAll().map { constructFlight(it) }
     }
 
-    // function to get all the valid airport names in teh database so you dont have to type them -Hanan
-    fun getAirportCodes(): List<String> {
-        val result: List<String> = transaction {
-            val airports = mutableListOf<String>()
-            val rows = FlightsTable.selectAll()
-            for (row in rows) {
-                airports.add(row[FlightsTable.departureAirport])
-                airports.add(row[FlightsTable.arrivalAirport])
-            }
-            airports.distinct().sorted()
+    fun getAirportCodes(): List<String> = transaction {
+        val airports = mutableListOf<String>()
+        FlightsTable.selectAll().forEach {
+            airports.add(it[FlightsTable.departureAirport])
+            airports.add(it[FlightsTable.arrivalAirport])
+        }
+        airports.distinct().sorted()
+    }
+
     fun searchFlights(from: String, to: String): List<Flights> = transaction {
         FlightsTable.selectAll().where {
             (FlightsTable.departureAirport eq from) and
             (FlightsTable.arrivalAirport eq to)
-        }.map {
-            constructFlight(it)
-        }
-        return result
+        }.map { constructFlight(it) }
     }
 
-    fun searchFlights(from: String, to: String, departTime: LocalDateTime, passengers: Int, cabinClass: String): List<Flights>? {
-        if (cabinClass == "Economy"){
-            val result: List<Flights> = transaction {
-            FlightsTable.selectAll().where { 
-                (FlightsTable.departureAirport eq from) and 
-                (FlightsTable.arrivalAirport eq to) and
-                (FlightsTable.departureTime greaterEq departTime) and
-                (FlightsTable.availableSeatsEconomy greaterEq passengers)
-                }.map {
-                constructFlight(it)
+    fun searchFlights(
+        from: String,
+        to: String,
+        departTime: LocalDateTime,
+        passengers: Int,
+        cabinClass: String
+    ): List<Flights>? {
+        return transaction {
+            when (cabinClass) {
+                "Economy" -> {
+                    FlightsTable.selectAll().where {
+                        (FlightsTable.departureAirport eq from) and
+                        (FlightsTable.arrivalAirport eq to) and
+                        (FlightsTable.departureTime greaterEq departTime) and
+                        (FlightsTable.availableSeatsEconomy greaterEq passengers)
+                    }.map { constructFlight(it) }
                 }
-            }
-            return result
-        }
-        if (cabinClass == "Business"){
-            val result: List<Flights> = transaction {
-            FlightsTable.selectAll().where { 
-                (FlightsTable.departureAirport eq from) and 
-                (FlightsTable.arrivalAirport eq to) and
-                (FlightsTable.departureTime greaterEq departTime) and 
-                (FlightsTable.availableSeatsBusiness greaterEq passengers)
-                }.map {
-                constructFlight(it)
+
+                "Business" -> {
+                    FlightsTable.selectAll().where {
+                        (FlightsTable.departureAirport eq from) and
+                        (FlightsTable.arrivalAirport eq to) and
+                        (FlightsTable.departureTime greaterEq departTime) and
+                        (FlightsTable.availableSeatsBusiness greaterEq passengers)
+                    }.map { constructFlight(it) }
                 }
+
+                else -> null
             }
-            return result
         }
+    }
 
-        return null 
-    } 
-
-
-    fun constructFlight(it: ResultRow): Flights {
+    private fun constructFlight(it: ResultRow): Flights {
         return Flights(
             id = it[FlightsTable.id],
             flightNumber = it[FlightsTable.flightNumber],
@@ -152,13 +125,11 @@ class FlightAccess {
             arrivalTime = it[FlightsTable.arrivalTime],
             price = it[FlightsTable.price],
             totalSeats = it[FlightsTable.totalSeats],
-            availableSeats = it[FlightsTable.availableSeats], 
-            totalSeatsEconomy = it[FlightsTable.totalSeatsEconomy],
-            availableSeatsEconomy = it[FlightsTable.availableSeatsEconomy], 
-            totalSeatsBusiness = it[FlightsTable.totalSeatsBusiness],
-            availableSeatsBusiness = it[FlightsTable.availableSeatsBusiness], 
-            createdAt = it[FlightsTable.createdAt] 
             availableSeats = it[FlightsTable.availableSeats],
+            totalSeatsEconomy = it[FlightsTable.totalSeatsEconomy],
+            availableSeatsEconomy = it[FlightsTable.availableSeatsEconomy],
+            totalSeatsBusiness = it[FlightsTable.totalSeatsBusiness],
+            availableSeatsBusiness = it[FlightsTable.availableSeatsBusiness],
             createdAt = it[FlightsTable.createdAt]
         )
     }
