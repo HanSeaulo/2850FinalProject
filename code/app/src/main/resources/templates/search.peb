@@ -1,138 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flight Search - Go Fly</title>
-  <link rel="stylesheet" href="/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Flights</title>
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
 
-  <nav class="navbar">
+  <div class="bg bg-a" id="bgA"></div>
+  <div class="bg bg-b" id="bgB"></div>
+
+  <header class="navbar">
     <div class="nav-container">
       <div class="logo">✈ Go Fly</div>
-      <div>
-        <a href="/home.html">Home</a>
+      <nav>
+        <a href="/">Home</a>
         <a href="/booking.html">View Bookings</a>
-        <a href="/login.html">Sign In</a>
+        <a href="/login">Sign In</a>
         <a href="/management.html">Management</a>
-      </div>
+      </nav>
     </div>
-  </nav>
+  </header>
 
   <main class="hero">
-    <div class="search-wrapper">
-      <h2>Find Your Next Destination</h2>
+    <div class="hero-bg" id="heroBgA"></div>
+    <div class="hero-bg" id="heroBgB"></div>
 
-      <form id="searchForm" action="/flights" method="GET">
-        <div class="trip-selector">
-          <label>
-            <input type="radio" name="path" value="roundtrip" id="rt-option" checked>
-            Round Trip
-          </label>
-          <label>
-            <input type="radio" name="path" value="oneway" id="ow-option">
-            One Way
-          </label>
-        </div>
+    <div class="hero-inner">
+      <div class="search-wrapper">
+        <h2>Find Your Next Destination</h2>
 
-        <div class="input-row">
-          <div>
-            <label>From</label>
-            <select name="from" required>
-              <option value="">Select airport</option>
-              {% for airport in airports %}
-                <option value="{{ airport }}">{{ airport }}</option>
-              {% endfor %}
-            </select>
+        <form action="/flights" method="get">
+          <div class="trip-selector">
+            <label>
+              <input type="radio" name="tripType" value="roundtrip" checked />
+              Round Trip
+            </label>
+            <label>
+              <input type="radio" name="tripType" value="oneway" />
+              One Way
+            </label>
           </div>
-          <div>
-            <label>To</label>
-            <select name="to" required>
-              <option value="">Select airport</option>
-              {% for airport in airports %}
-                <option value="{{ airport }}">{{ airport }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
 
-        <div class="input-row">
-          <div>
-            <label>Departure</label>
-            <input type="date" id="dep-date" name="depart" required>
-          </div>
-          <div id="return-box">
-            <label>Return</label>
-            <input type="date" id="ret-date" name="return">
-          </div>
-        </div>
+          <div class="input-row">
+            <div>
+              <label for="from">From</label>
+              <select id="from" name="from" required>
+                {% for airport in airports %}
+                  <option value="{{ airport }}">{{ airport }}</option>
+                {% endfor %}
+              </select>
+            </div>
 
-        <div class="input-row">
-          <div>
-            <label>Passengers</label>
-            <input type="number" name="qty" min="1" value="1">
+            <div>
+              <label for="to">To</label>
+              <select id="to" name="to" required>
+                {% for airport in airports %}
+                  <option value="{{ airport }}">{{ airport }}</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
-          <div>
-            <label>Cabin Class</label>
-            <select name="class">
-              <option value="econ">Economy</option>
-              <option value="bus">Business</option>
-            </select>
-          </div>
-        </div>
 
-        <div class="submit-area">
-          <button type="submit" class="btn-find">Search Flights</button>
-        </div>
-      </form>
+          <div class="input-row">
+            <div>
+              <label for="depart">Departure</label>
+              <input type="date" id="depart" name="depart" required />
+            </div>
+
+            <div>
+              <label for="return">Return</label>
+              <input type="date" id="return" name="return" />
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div>
+              <label for="qty">Passengers</label>
+              <input type="number" id="qty" name="qty" min="1" value="1" required />
+            </div>
+
+            <div>
+              <label for="class">Cabin Class</label>
+              <select id="class" name="class" required>
+                <option value="econ">Economy</option>
+                <option value="bus">Business</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="submit-area">
+            <button type="submit" class="btn-find">Search Flights</button>
+          </div>
+        </form>
+      </div>
     </div>
   </main>
 
   <script>
-    const roundTrip = document.getElementById("rt-option");
-    const oneWay = document.getElementById("ow-option");
-    const departDate = document.getElementById("dep-date");
-    const returnDate = document.getElementById("ret-date");
-    const returnBox = document.getElementById("return-box");
-    const searchForm = document.getElementById("searchForm");
+    const images = ["/bg/bg1.jpeg", "/bg/bg2.jpeg", "/bg/bg3.jpeg"];
 
-    function updateTripType() {
-      if (oneWay.checked) {
-        returnBox.style.display = "none";
-        returnDate.value = "";
-        returnDate.disabled = true;
-      } else {
-        returnBox.style.display = "block";
-        returnDate.disabled = false;
-        returnDate.min = departDate.value;
-      }
-    }
+    let index = 0;
+    let showingA = true;
 
-    departDate.addEventListener("change", function () {
-      returnDate.min = departDate.value;
+    const bgA = document.getElementById("heroBgA");
+    const bgB = document.getElementById("heroBgB");
 
-      if (returnDate.value !== "" && returnDate.value < departDate.value) {
-        returnDate.value = "";
-      }
-    });
+    bgA.style.backgroundImage = "url('" + images[0] + "')";
+    bgA.classList.add("show");
 
-    roundTrip.addEventListener("change", updateTripType);
-    oneWay.addEventListener("change", updateTripType);
+    setInterval(() => {
+      index = (index + 1) % images.length;
+      const next = images[index];
 
-    searchForm.addEventListener("submit", function (event) {
-      if (roundTrip.checked) {
-        if (returnDate.value === "") {
-          alert("Please choose a return date.");
-          event.preventDefault();
-        } else if (returnDate.value < departDate.value) {
-          alert("Return date cannot be before departure date.");
-          event.preventDefault();
-        }
-      }
-    });
+      const showEl = showingA ? bgB : bgA;
+      const hideEl = showingA ? bgA : bgB;
 
-    updateTripType();
+      showEl.style.backgroundImage = "url('" + next + "')";
+      showEl.classList.add("show");
+      hideEl.classList.remove("show");
+
+      showingA = !showingA;
+    }, 6000);
   </script>
 
 </body>

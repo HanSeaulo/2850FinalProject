@@ -91,27 +91,12 @@ class FlightAccess {
         cabinClass: String
     ): List<Flights>? {
         return transaction {
-            when (cabinClass) {
-                "Economy" -> {
-                    FlightsTable.selectAll().where {
-                        (FlightsTable.departureAirport eq from) and
-                        (FlightsTable.arrivalAirport eq to) and
-                        (FlightsTable.departureTime greaterEq departTime) and
-                        (FlightsTable.availableSeatsEconomy greaterEq passengers)
-                    }.map { constructFlight(it) }
-                }
-
-                "Business" -> {
-                    FlightsTable.selectAll().where {
-                        (FlightsTable.departureAirport eq from) and
-                        (FlightsTable.arrivalAirport eq to) and
-                        (FlightsTable.departureTime greaterEq departTime) and
-                        (FlightsTable.availableSeatsBusiness greaterEq passengers)
-                    }.map { constructFlight(it) }
-                }
-
-                else -> null
-            }
+            FlightsTable.selectAll().where {
+                (FlightsTable.departureAirport eq from) and
+                (FlightsTable.arrivalAirport eq to) and
+                (FlightsTable.departureTime greaterEq departTime) and
+                (FlightsTable.availableSeats greaterEq passengers)
+            }.map { constructFlight(it) }
         }
     }
 
@@ -126,10 +111,6 @@ class FlightAccess {
             price = it[FlightsTable.price],
             totalSeats = it[FlightsTable.totalSeats],
             availableSeats = it[FlightsTable.availableSeats],
-            totalSeatsEconomy = it[FlightsTable.totalSeatsEconomy],
-            availableSeatsEconomy = it[FlightsTable.availableSeatsEconomy],
-            totalSeatsBusiness = it[FlightsTable.totalSeatsBusiness],
-            availableSeatsBusiness = it[FlightsTable.availableSeatsBusiness],
             createdAt = it[FlightsTable.createdAt]
         )
     }

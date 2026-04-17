@@ -17,33 +17,24 @@ dependencies {
 
     implementation(libs.guava)
 
-    // Ktor
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
-    implementation("io.ktor:ktor-server-sessions-jvm:${libs.versions.ktor.get()}")
+    implementation("io.ktor:ktor-server-pebble-jvm:${libs.versions.ktor.get()}")
 
-    // for pebble
-    implementation("io.ktor:ktor-server-pebble:2.3.12")
-
-    // this logs when ./gradlew run is entered, commenting is in option if do not want a lot of text on terminal during gradle run
     implementation("ch.qos.logback:logback-classic:1.4.14")
 
-    //database 
-    // Database
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
     implementation(libs.h2)
 
-    // Exposed
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$datetimeVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
-    // SQLite
     implementation("org.xerial:sqlite-jdbc:3.50.2.0")
 }
 
@@ -51,6 +42,10 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+}
+
+kotlin {
+    jvmToolchain(21)
 }
 
 application {

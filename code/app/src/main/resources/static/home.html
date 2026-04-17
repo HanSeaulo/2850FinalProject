@@ -24,64 +24,51 @@
   </header>
 
   <main class="hero">
-  <!-- background layers only for the hero -->
-  <div class="hero-bg" id="bgA"></div>
-  <div class="hero-bg" id="bgB"></div>
+    <div class="hero-bg" id="bgA"></div>
+    <div class="hero-bg" id="bgB"></div>
 
-  <!-- content sits above background -->
-  <div class="hero-inner">
-    <div class="features">
-      <div class="feature-card">
-        <h3>Best Prices</h3>
-        <p>Competitive fares worldwide</p>
+    <div class="hero-inner">
+      <div class="features">
+        <div class="feature-card">
+          <h3>Best Prices</h3>
+          <p>Competitive fares worldwide</p>
+        </div>
+        <div class="feature-card">
+          <h3>Secure Booking</h3>
+          <p>Safe and encrypted payments</p>
+        </div>
       </div>
-      <div class="feature-card">
-        <h3>Secure Booking</h3>
-        <p>Safe and encrypted payments</p>
-      </div>
+
+      <a href="/search" class="big-button">MAKE A BOOKING</a>
     </div>
+  </main>
 
-    <a href="/search.html" class="big-button">MAKE A BOOKING</a>
-  </div>
-</main>
+  <script>
+    const images = ["/bg/bg1.jpeg", "/bg/bg2.jpeg", "/bg/bg3.jpeg"];
 
-<script>
-  fetch("/current-user")
-    .then(response => response.text())
-    .then(name => {
-      if (name && name.trim() !== "") {
-        const signInLink = document.getElementById("signin-link");
-        if (signInLink) {
-          signInLink.textContent = name;
-          signInLink.href = "/logout";
-        }
-      }
-    });
-  const images = ["/bg/bg1.jpeg", "/bg/bg2.jpeg", "/bg/bg3.jpeg"];
+    let index = 0;
+    let showingA = true;
 
-  let index = 0;
-  let showingA = true;
+    const bgA = document.getElementById("bgA");
+    const bgB = document.getElementById("bgB");
 
-  const bgA = document.getElementById("bgA");
-  const bgB = document.getElementById("bgB");
+    bgA.style.backgroundImage = "url('" + images[0] + "')";
+    bgA.classList.add("show");
 
-  bgA.style.backgroundImage = "url('" + images[0] + "')";
-  bgA.classList.add("show");
+    setInterval(() => {
+      index = (index + 1) % images.length;
+      const next = images[index];
 
-  setInterval(() => {
-    index = (index + 1) % images.length;
-    const next = images[index];
+      const showEl = showingA ? bgB : bgA;
+      const hideEl = showingA ? bgA : bgB;
 
-    const showEl = showingA ? bgB : bgA;
-    const hideEl = showingA ? bgA : bgB;
+      showEl.style.backgroundImage = "url('" + next + "')";
+      showEl.classList.add("show");
+      hideEl.classList.remove("show");
 
-    showEl.style.backgroundImage = "url('" + next + "')";
-    showEl.classList.add("show");
-    hideEl.classList.remove("show");
-
-    showingA = !showingA;
-  }, 6000);
-</script>
+      showingA = !showingA;
+    }, 6000);
+  </script>
 
 </body>
 </html>

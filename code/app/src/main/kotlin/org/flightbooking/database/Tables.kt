@@ -1,7 +1,6 @@
 package tables
 
 import org.jetbrains.exposed.v1.core.Table
-import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.datetime.datetime
 
 const val MAX_STRING_LENGTH = 255
@@ -25,7 +24,7 @@ object UsersTable : Table("Users") {
     override val primaryKey = PrimaryKey(id)
 }
 
-object FlightsTable : Table("Flights" ) {
+object FlightsTable : Table("Flights") {
     val id = integer("id").autoIncrement()
     val flightNumber = varchar("flight_number", MAX_STRING_LENGTH)
     val departureAirport = varchar("departure_airport", MAX_STRING_LENGTH)
@@ -35,10 +34,6 @@ object FlightsTable : Table("Flights" ) {
     val price = double("price")
     val totalSeats = integer("total_seats")
     val availableSeats = integer("available_seats")
-    val totalSeatsEconomy = integer("total_seats_economy")
-    val availableSeatsEconomy = integer("available_seats_economy")
-    val totalSeatsBusiness = integer("total_seats_business")
-    val availableSeatsBusiness = integer("available_seats_business")
     val createdAt = datetime("created_at")
 
     override val primaryKey = PrimaryKey(id)
