@@ -22,8 +22,7 @@ dependencies {
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation("io.ktor:ktor-server-pebble-jvm:${libs.versions.ktor.get()}")
-
-    implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("io.ktor:ktor-server-sessions-jvm:${libs.versions.ktor.get()}")
 
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)

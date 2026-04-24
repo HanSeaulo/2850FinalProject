@@ -31,7 +31,7 @@ object FlightsTable : Table("Flights") {
     val arrivalAirport = varchar("arrival_airport", MAX_STRING_LENGTH)
     val departureTime = datetime("departure_time")
     val arrivalTime = datetime("arrival_time")
-    val price = double("price")
+    val price = decimal("price", 10, 2)
     val totalSeats = integer("total_seats")
     val availableSeats = integer("available_seats")
     val createdAt = datetime("created_at")
@@ -44,7 +44,7 @@ object BookingsTable : Table("Bookings") {
     val userId = integer("user_id").references(UsersTable.id)
     val flightId = integer("flight_id").references(FlightsTable.id)
     val status = varchar("status", MAX_STRING_LENGTH)
-    val totalPrice = double("total_price")
+    val totalPrice = decimal("total_price", 10, 2)
     val createdAt = datetime("created_at")
 
     override val primaryKey = PrimaryKey(id)
@@ -55,9 +55,13 @@ object PassengersTable : Table("Passengers") {
     val bookingId = integer("booking_id").references(BookingsTable.id)
     val firstName = varchar("first_name", MAX_STRING_LENGTH)
     val lastName = varchar("last_name", MAX_STRING_LENGTH)
-    val email = varchar("email", MAX_STRING_LENGTH).uniqueIndex()
+    val email = varchar("email", MAX_STRING_LENGTH)
 
     override val primaryKey = PrimaryKey(id)
+
+    init {
+        uniqueIndex(bookingId, email)
+    }
 }
 
 object RequestsTable : Table("Requests") {
@@ -66,7 +70,7 @@ object RequestsTable : Table("Requests") {
     val type = varchar("type", MAX_STRING_LENGTH)
     val status = varchar("status", MAX_STRING_LENGTH)
     val createdAt = datetime("created_at")
-    val processedAt = datetime("processed_at")
+    val processedAt = datetime("processed_at").nullable()
 
     override val primaryKey = PrimaryKey(id)
 }

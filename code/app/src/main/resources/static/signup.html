@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign Up</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <main class="auth-page">
@@ -14,44 +14,22 @@
         <p>Create an account to save passengers and track bookings.</p>
       </div>
 
-      <!-- action can be /signup later -->
-      <form class="auth-form" action="/signup" method="post" id="signupForm">
+      <form class="auth-form" action="/signup" method="post">
         <label for="name">Full name</label>
-        <input id="name" name="name" type="text" placeholder="Your name" required />
+        <input id="name" name="name" type="text" placeholder="Your full name" required />
 
         <label for="email">Email</label>
         <input id="email" name="email" type="email" placeholder="you@example.com" required />
 
-        <label for="role">Role</label>
-        <select id="role" name="role" required>
-          <option value="user" selected>User</option>
-          <option value="manager">Manager</option>
-          <option value="admin">Admin</option>
-        </select>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Create a password" required />
 
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" placeholder="Create a password" required />
+        <button type="submit" class="primary">Create Account</button>
+      </form>
 
-      <label for="confirm">Confirm password</label>
-      <input id="confirm" name="confirm" type="password" placeholder="Repeat password" required />
-
-      <button type="submit" class="primary">Create Account</button>
-    </form>
-
-    <script>
-  // client-side confirm password check (prevents submit)
-      document.getElementById("signupForm").addEventListener("submit", function (e) {
-        const pw = document.getElementById("password").value;
-        const cf = document.getElementById("confirm").value;
-        if (pw !== cf) {
-          e.preventDefault();
-          alert("Passwords do not match.");
-        }
-      });
-    </script>
       <p class="footer-text">
         Already have an account?
-        <a class="link" href="login.html">Log in</a>
+        <a class="link" href="/login.html">Log in</a>
       </p>
     </div>
   </main>

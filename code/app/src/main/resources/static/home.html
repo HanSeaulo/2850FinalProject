@@ -8,6 +8,7 @@
 </head>
 <body>
 
+  <!-- BACKGROUND -->
   <div class="bg bg-a" id="bgA"></div>
   <div class="bg bg-b" id="bgB"></div>
 
@@ -24,9 +25,6 @@
   </header>
 
   <main class="hero">
-    <div class="hero-bg" id="bgA"></div>
-    <div class="hero-bg" id="bgB"></div>
-
     <div class="hero-inner">
       <div class="features">
         <div class="feature-card">
@@ -44,6 +42,7 @@
   </main>
 
   <script>
+    // ✅ FIXED background animation
     const images = ["/bg/bg1.jpeg", "/bg/bg2.jpeg", "/bg/bg3.jpeg"];
 
     let index = 0;
@@ -68,6 +67,17 @@
 
       showingA = !showingA;
     }, 6000);
+
+    // ✅ USER NAME DISPLAY
+    fetch("/current-user")
+      .then(res => res.text())
+      .then(name => {
+        if (name && name.trim() !== "") {
+          const link = document.getElementById("signin-link");
+          link.textContent = name;
+          link.href = "/logout";
+        }
+      });
   </script>
 
 </body>
