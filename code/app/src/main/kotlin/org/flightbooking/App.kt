@@ -15,7 +15,6 @@ import kotlinx.datetime.LocalDateTime
 
 import database.DBFactory
 import access.*
-import statsaccess.*
 
 fun main() {
     embeddedServer(Netty, port = 8080) {
