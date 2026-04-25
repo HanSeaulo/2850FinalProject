@@ -33,6 +33,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$datetimeVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+    implementation("org.jetbrains.exposed:exposed-java-time:0.41.1")
 
     implementation("org.xerial:sqlite-jdbc:3.50.2.0")
 }
