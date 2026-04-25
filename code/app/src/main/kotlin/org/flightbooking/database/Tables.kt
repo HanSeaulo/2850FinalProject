@@ -66,7 +66,7 @@ object RequestsTable : Table("Requests") {
     val type = varchar("type", MAX_STRING_LENGTH)
     val status = varchar("status", MAX_STRING_LENGTH)
     val createdAt = datetime("created_at")
-    val processedAt = datetime("processed_at")
+    val processedAt = datetime("processed_at").nullable()
 
     override val primaryKey = PrimaryKey(id)
 }

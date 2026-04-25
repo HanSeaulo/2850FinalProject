@@ -18,11 +18,13 @@ import kotlinx.datetime.LocalDateTime
 
 class ManagementDashboard {
 
+    //pass negative numbers into the function to query from however many days ago, e.g TodaysBookings(-1) will return from yesterdays date
     @OptIn(ExperimentalTime::class)
-    fun TodaysBookings(): Int = transaction {
+    fun TodaysBookings(offset: Int = 0): Int = transaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        val startOfDay = LocalDateTime(now.year, now.month, now.day, 0, 0, 0)
-        val endOfDay = LocalDateTime(now.year, now.month, now.day, 23, 59, 59)
+        val date = LocalDate(now.year, now.month, now.day).plus(offset, DateTimeUnit.DAY)
+        val startOfDay = LocalDateTime(date.year, date.month, date.day, 0, 0, 0)
+        val endOfDay = LocalDateTime(date.year, date.month, date.day, 23, 59, 59)
 
         BookingsTable.selectAll().where {
             (BookingsTable.createdAt greaterEq startOfDay) and
