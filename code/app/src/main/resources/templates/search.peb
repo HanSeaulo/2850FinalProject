@@ -8,9 +8,6 @@
 </head>
 <body>
 
-  <div class="bg bg-a" id="bgA"></div>
-  <div class="bg bg-b" id="bgB"></div>
-
   <header class="navbar">
     <div class="nav-container">
       <div class="logo">✈ Go Fly</div>
@@ -23,10 +20,7 @@
     </div>
   </header>
 
-  <main class="hero">
-    <div class="hero-bg" id="heroBgA"></div>
-    <div class="hero-bg" id="heroBgB"></div>
-
+  <main class="hero search-only">
     <div class="hero-inner">
       <div class="search-wrapper">
         <h2>Find Your Next Destination</h2>
@@ -47,6 +41,7 @@
             <div>
               <label for="from">From</label>
               <select id="from" name="from" required>
+                <option value="" disabled selected>Select departure airport</option>
                 {% for airport in airports %}
                   <option value="{{ airport }}">{{ airport }}</option>
                 {% endfor %}
@@ -56,10 +51,11 @@
             <div>
               <label for="to">To</label>
               <select id="to" name="to" required>
-                {% for airport in airports %}
-                  <option value="{{ airport }}">{{ airport }}</option>
-                {% endfor %}
-              </select>
+  <option value="" disabled selected>Select destination airport</option>
+  {% for airport in airports %}
+    <option value="{{ airport }}">{{ airport }}</option>
+  {% endfor %}
+</select>
             </div>
           </div>
 
@@ -98,32 +94,6 @@
     </div>
   </main>
 
-  <script>
-    const images = ["/bg/bg1.jpeg", "/bg/bg2.jpeg", "/bg/bg3.jpeg"];
-
-    let index = 0;
-    let showingA = true;
-
-    const bgA = document.getElementById("heroBgA");
-    const bgB = document.getElementById("heroBgB");
-
-    bgA.style.backgroundImage = "url('" + images[0] + "')";
-    bgA.classList.add("show");
-
-    setInterval(() => {
-      index = (index + 1) % images.length;
-      const next = images[index];
-
-      const showEl = showingA ? bgB : bgA;
-      const hideEl = showingA ? bgA : bgB;
-
-      showEl.style.backgroundImage = "url('" + next + "')";
-      showEl.classList.add("show");
-      hideEl.classList.remove("show");
-
-      showingA = !showingA;
-    }, 6000);
-  </script>
 
 </body>
 </html>

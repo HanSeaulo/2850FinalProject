@@ -4,9 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Flights</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
-
 <body>
   <nav class="navbar">
     <div class="nav-container">
@@ -14,7 +13,7 @@
       <div>
         <a href="/home.html">Home</a>
         <a href="/booking.html">View Bookings</a>
-        <a href="/login.html">Sign In</a>
+        <a href="/login">Sign In</a>
         <a href="/management.html">Management</a>
       </div>
     </div>
@@ -22,12 +21,14 @@
 
   <div class="container page">
     <h1 class="page-title">Available Flights</h1>
-    <p class="page-subtitle">Select a flight to continue to payment</p>
-
+    <p class="page-subtitle">Confirm your flight, then choose seats before payment.</p>
+    <div id="searchSummary" class="stat-card" style="display:none;"></div>
     <div id="flightsList"></div>
   </div>
 
   <script>
+    const params = new URLSearchParams(window.location.search);
+
     function escapeHtml(value) {
       return String(value)
         .replaceAll("&", "&amp;")
@@ -37,25 +38,40 @@
         .replaceAll("'", "&#39;");
     }
 
-    function selectFlight(flightNumber) {
-      window.location.href = "/payments.html?flight=" + encodeURIComponent(flightNumber);
+    function selectFlight(flightId) {
+      const next = new URLSearchParams(window.location.search);
+      next.set("flightId", flightId);
+      window.location.href = "/seats.html?" + next.toString();
     }
 
     async function loadFlights() {
       const container = document.getElementById("flightsList");
+      const summary = document.getElementById("searchSummary");
+      const apiParams = new URLSearchParams(window.location.search);
+
+      const from = params.get("from");
+      const to = params.get("to");
+      const qty = params.get("qty") || "1";
+
+      if (from || to) {
+        summary.style.display = "block";
+        summary.textContent =
+          `Showing flights ${from ? `from ${from}` : ""} ${to ? `to ${to}` : ""} for ${qty} passenger(s).`.trim();
+      }
+
       container.innerHTML = `<div class="stat-card">Loading flights...</div>`;
 
       try {
-        const response = await fetch("/api/flights");
-
+        const response = await fetch("/api/flights?" + apiParams.toString());
         if (!response.ok) {
-          throw new Error("Failed to load flights");
+          const text = await response.text();
+          throw new Error(text || "Failed to load flights");
         }
 
         const flights = await response.json();
 
         if (!flights.length) {
-          container.innerHTML = `<div class="stat-card">No flights available right now.</div>`;
+          container.innerHTML = `<div class="stat-card">No flights matched your search.</div>`;
           return;
         }
 
@@ -64,27 +80,24 @@
             <div class="flight-left">
               <div class="flight-route">
                 <span>${escapeHtml(f.from)}</span>
-                <span class="flight-route-icon"> →   ✈   → </span>
+                <span class="flight-route-icon"> → ✈ → </span>
                 <span>${escapeHtml(f.to)}</span>
               </div>
-
-              <div class="flight-number-small">
-                Flight ${escapeHtml(f.flightNumber)}
-              </div>
+              <div class="flight-number-small">Flight ${escapeHtml(f.flightNumber)}</div>
+              <div class="flight-number-small"><strong>Departure:</strong> ${escapeHtml(f.departureTime.replace("T", " "))}</div>
+              <div class="flight-number-small"><strong>Arrival:</strong> ${escapeHtml(f.arrivalTime.replace("T", " "))}</div>
+              <div class="flight-number-small"><strong>Seats left:</strong> ${Number(f.availableSeats)}</div>
             </div>
 
             <div class="flight-right">
               <div class="flight-price-big">$${Number(f.price).toFixed(2)}</div>
-
-              <button class="btn-find" onclick="selectFlight('${encodeURIComponent(f.flightNumber)}')">
-                Select Flight
-              </button>
+              <button class="btn-find" onclick="selectFlight(${Number(f.id)})">Confirm Flight</button>
             </div>
           </div>
         `).join("");
       } catch (error) {
-        container.innerHTML = `<div class="stat-card">Could not load flights right now.</div>`;
         console.error(error);
+        container.innerHTML = `<div class="stat-card">Could not load flights: ${error.message}</div>`;
       }
     }
 

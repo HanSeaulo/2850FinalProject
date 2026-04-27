@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Select Seats</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">✈ Go Fly</div>
+      <div>
+        <a href="/home.html">Home</a>
+        <a href="/booking.html">View Bookings</a>
+        <a href="/login">Sign In</a>
+        <a href="/management.html">Management</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container page">
+    <h1 class="page-title">Choose Your Seats</h1>
+    <p class="page-subtitle">Select the required number of seats before continuing to payment.</p>
+
+    <div class="stat-card" id="seatSummary">Loading seat map...</div>
+    <div class="seat-map" id="seatMap"></div>
+
+    <div class="seat-actions">
+      <a class="button-outline" id="backToFlights" href="/flights.html">Back to Flights</a>
+      <button class="btn-find" id="continueBtn" type="button">Continue to Payment</button>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const qty = Number(params.get("qty") || "1");
+    const selected = new Set((params.get("seats") || "").split(",").filter(Boolean));
+    const seatMap = document.getElementById("seatMap");
+    const seatSummary = document.getElementById("seatSummary");
+    const continueBtn = document.getElementById("continueBtn");
+    const backToFlights = document.getElementById("backToFlights");
+
+    backToFlights.href = "/flights.html?" + params.toString();
+
+    const rows = 8;
+    const cols = ["A", "B", "C", "D", "E", "F"];
+    const unavailable = new Set(["1C", "2D", "3A", "4F", "6B", "7E"]);
+
+    function render() {
+      seatMap.innerHTML = "";
+      for (let row = 1; row <= rows; row++) {
+        cols.forEach(col => {
+          const seat = `${row}${col}`;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = seat;
+          button.className = "seat";
+          if (unavailable.has(seat)) {
+            button.classList.add("seat-unavailable");
+            button.disabled = true;
+          }
+          if (selected.has(seat)) button.classList.add("seat-selected");
+
+          button.addEventListener("click", () => {
+            if (selected.has(seat)) {
+              selected.delete(seat);
+            } else {
+              if (selected.size >= qty) return;
+              selected.add(seat);
+            }
+            updateSummary();
+            render();
+          });
+          seatMap.appendChild(button);
+        });
+      }
+    }
+
+    function updateSummary() {
+      const seats = Array.from(selected);
+      seatSummary.textContent = `Choose ${qty} seat(s). Selected: ${seats.length ? seats.join(", ") : "none yet"}.`;
+      continueBtn.disabled = selected.size !== qty;
+    }
+
+    continueBtn.addEventListener("click", () => {
+      const next = new URLSearchParams(window.location.search);
+      next.set("seats", Array.from(selected).join(","));
+      window.location.href = "/payment.html?" + next.toString();
+    });
+
+    updateSummary();
+    render();
+  </script>
+</body>
+</html>

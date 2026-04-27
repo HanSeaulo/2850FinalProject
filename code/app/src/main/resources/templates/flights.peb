@@ -22,7 +22,7 @@
 
   <div class="container page">
     <h1 class="page-title">Available Flights</h1>
-    <p class="page-subtitle">Select a flight to continue to payment</p>
+    <p class="page-subtitle">Confirm a flight, then choose seats before payment.</p>
 
     {% if error %}
       <div class="stat-card">
@@ -57,18 +57,14 @@
             </div>
 
             <div class="flight-number-small">
-              <strong>Economy seats:</strong> {{ f.availableSeatsEconomy }}
-            </div>
-
-            <div class="flight-number-small">
-              <strong>Business seats:</strong> {{ f.availableSeatsBusiness }}
+              <strong>Seats left:</strong> {{ f.availableSeats }}
             </div>
           </div>
 
           <div class="flight-right">
             <div class="flight-price-big">£{{ f.price }}</div>
 
-            <a href="/payments.html?flight={{ f.flightNumber }}" class="btn-find">
+            <a href="/seats.html?flightId={{ f.id }}" class="btn-find">
               Select Flight
             </a>
           </div>

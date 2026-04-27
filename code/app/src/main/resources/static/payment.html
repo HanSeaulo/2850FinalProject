@@ -11,25 +11,31 @@
     <div class="auth-card">
       <div class="brand">
         <h1>Payment</h1>
-        <p>Review your fare and complete your booking.</p>
+        <p>Review your fare, selected seats, and complete your booking.</p>
       </div>
 
       <form class="auth-form" action="/payment" method="post">
         <input type="hidden" id="flight-id" name="flightId" />
+        <input type="hidden" id="selected-seats" name="selectedSeats" />
 
-        <label for="seat-price-display">Seat price</label>
+        <label for="selected-seats-display">Selected seats</label>
+        <input id="selected-seats-display" type="text" value="Loading..." readonly />
+
+        <label for="passenger-count-display">Passengers</label>
+        <input id="passenger-count-display" type="text" value="1" readonly />
+
+        <label for="seat-price-display">Flight subtotal</label>
         <input id="seat-price-display" type="text" value="Loading..." readonly />
 
         <label for="luggage">Select luggage</label>
         <select id="luggage" name="luggage" required>
-          <option value="" disabled selected>Select luggage</option>
           <option value="none">No extra luggage ($0)</option>
           <option value="10kg">Small (10 kg) — $30</option>
           <option value="23kg">Big (23 kg) — $60</option>
         </select>
 
         <label for="luggage-price-display">Luggage price</label>
-        <input id="luggage-price-display" type="text" value="$0" readonly />
+        <input id="luggage-price-display" type="text" value="$0.00" readonly />
 
         <label for="total-price-display">Total price</label>
         <input id="total-price-display" type="text" value="Loading..." readonly />
@@ -52,19 +58,19 @@
 
         <button type="submit" class="primary">Pay Now</button>
       </form>
-
-      <p class="footer-text">
-        Need to change your booking?
-        <a class="link" href="/search.html">Go back</a>
-      </p>
     </div>
   </main>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const flightId = params.get("flightId");
+    const passengerCount = Number(params.get("qty") || "1");
+    const selectedSeats = (params.get("seats") || "").split(",").filter(Boolean);
 
     const flightIdInput = document.getElementById("flight-id");
+    const selectedSeatsInput = document.getElementById("selected-seats");
+    const selectedSeatsDisplay = document.getElementById("selected-seats-display");
+    const passengerCountDisplay = document.getElementById("passenger-count-display");
     const seatPriceDisplay = document.getElementById("seat-price-display");
     const luggageSelect = document.getElementById("luggage");
     const luggagePriceDisplay = document.getElementById("luggage-price-display");
@@ -77,6 +83,9 @@
     let seatPrice = 0;
 
     flightIdInput.value = flightId || "";
+    selectedSeatsInput.value = selectedSeats.join(",");
+    selectedSeatsDisplay.value = selectedSeats.length ? selectedSeats.join(", ") : "No seats selected";
+    passengerCountDisplay.value = passengerCount.toString();
 
     function getLuggagePrice(value) {
       if (value === "10kg") return 30;
@@ -91,16 +100,17 @@
       luggagePriceDisplay.value = `$${luggagePrice.toFixed(2)}`;
       totalPriceDisplay.value = `$${total.toFixed(2)}`;
 
-      seatPriceHidden.value = seatPrice.toString();
-      luggagePriceHidden.value = luggagePrice.toString();
-      totalPriceHidden.value = total.toString();
+      seatPriceHidden.value = seatPrice.toFixed(2);
+      luggagePriceHidden.value = luggagePrice.toFixed(2);
+      totalPriceHidden.value = total.toFixed(2);
     }
 
     if (flightId) {
-      fetch(`/flight-price?flightId=${flightId}`)
+      fetch(`/flight-price?flightId=${encodeURIComponent(flightId)}`)
         .then(response => response.json())
         .then(data => {
-          seatPrice = Number(data.price) || 0;
+          const basePrice = Number(data.price) || 0;
+          seatPrice = basePrice * passengerCount;
           seatPriceDisplay.value = `$${seatPrice.toFixed(2)}`;
           updateTotal();
         })

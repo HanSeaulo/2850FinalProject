@@ -7,14 +7,13 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-
   <header class="navbar">
     <div class="nav-container">
       <div class="logo">✈ Flight Booker</div>
       <nav>
         <a href="/">Home</a>
-        <a href="/bookings">View Bookings</a>
-        <a href="/signin">Sign In</a>
+        <a href="/booking.html">View Bookings</a>
+        <a href="/login">Sign In</a>
         <a href="/management">Management</a>
       </nav>
     </div>
@@ -24,56 +23,33 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Management Dashboard</h1>
-        <p class="page-subtitle">Admin tools for flights, bookings, and users.</p>
+        <p class="page-subtitle">Live stats from the database.</p>
       </div>
-      <a class="button-outline" href="/">Back to Home</a>
+      <a class="button-outline" href="/home.html">Back to Home</a>
     </div>
 
     <section class="stats">
       <div class="stat-card">
         <div class="stat-label">Today’s Bookings</div>
-        <div class="stat-value">12</div>
-        <div class="stat-note">+2 vs yesterday</div>
+        <div class="stat-value" id="todaysBookings">-</div>
+        <div class="stat-note" id="bookingsTrend">Loading...</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Active Flights</div>
-        <div class="stat-value">48</div>
-        <div class="stat-note">Across all routes</div>
+        <div class="stat-value" id="activeFlights">-</div>
+        <div class="stat-note" id="totalFlights">Loading...</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Registered Users</div>
-        <div class="stat-value">305</div>
-        <div class="stat-note">Growing steadily</div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">Quick Actions</h2>
-      <div class="action-grid">
-        <a class="action-card" href="/management/flights">
-          <h3>Manage Flights</h3>
-          <p>Create routes, update prices, set schedules.</p>
-          <span class="chip">Flights</span>
-        </a>
-
-        <a class="action-card" href="/management/bookings">
-          <h3>Manage Bookings</h3>
-          <p>Review, cancel, and confirm reservations.</p>
-          <span class="chip">Bookings</span>
-        </a>
-
-        <a class="action-card" href="/management/users">
-          <h3>Manage Users</h3>
-          <p>View users, roles, and permissions.</p>
-          <span class="chip">Users</span>
-        </a>
+        <div class="stat-value" id="registeredUsers">-</div>
+        <div class="stat-note" id="openRequests">Loading...</div>
       </div>
     </section>
 
     <section class="card">
       <div class="table-header">
         <h2 class="section-title">Recent Activity</h2>
-        <span class="muted">Demo data for now</span>
+        <span class="muted">Latest bookings, signups, and requests</span>
       </div>
 
       <div class="table-wrap">
@@ -86,30 +62,65 @@
               <th>Status</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>10:42</td>
-              <td>Booking created</td>
-              <td>#BK1029 • YVR → YYZ</td>
-              <td><span class="badge ok">OK</span></td>
-            </tr>
-            <tr>
-              <td>10:10</td>
-              <td>Flight updated</td>
-              <td>AC101 price changed</td>
-              <td><span class="badge warn">Review</span></td>
-            </tr>
-            <tr>
-              <td>09:55</td>
-              <td>User registered</td>
-              <td>newuser@email.com</td>
-              <td><span class="badge ok">OK</span></td>
-            </tr>
+          <tbody id="activityBody">
+            <tr><td colspan="4">Loading activity...</td></tr>
           </tbody>
         </table>
       </div>
     </section>
   </main>
 
+  <script>
+    function badgeClass(status) {
+      const normalized = String(status || "").toLowerCase();
+      if (normalized.includes("approved") || normalized.includes("confirmed") || normalized === "ok") return "ok";
+      if (normalized.includes("pending") || normalized.includes("review")) return "warn";
+      return "warn";
+    }
+
+    fetch("/api/management-stats")
+      .then(async r => {
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+      })
+      .then(stats => {
+        document.getElementById("todaysBookings").textContent = stats.todaysBookings;
+        document.getElementById("bookingsTrend").textContent = `${stats.yesterdayBookings} yesterday`;
+        document.getElementById("activeFlights").textContent = stats.activeFlights;
+        document.getElementById("totalFlights").textContent = `${stats.totalFlights} total flights`;
+        document.getElementById("registeredUsers").textContent = stats.registeredUsers;
+        document.getElementById("openRequests").textContent = `${stats.openRequests} open requests`;
+      })
+      .catch(error => {
+        document.getElementById("bookingsTrend").textContent = "Could not load stats";
+        document.getElementById("totalFlights").textContent = error.message || "Could not load stats";
+        document.getElementById("openRequests").textContent = "Could not load stats";
+      });
+
+    fetch("/api/recent-activity")
+      .then(async r => {
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+      })
+      .then(items => {
+        const body = document.getElementById("activityBody");
+        if (!items.length) {
+          body.innerHTML = `<tr><td colspan="4">No recent activity found.</td></tr>`;
+          return;
+        }
+        body.innerHTML = items.map(item => `
+          <tr>
+            <td>${String(item.time).replace("T", " ")}</td>
+            <td>${item.action}</td>
+            <td>${item.details}</td>
+            <td><span class="badge ${badgeClass(item.status)}">${item.status}</span></td>
+          </tr>
+        `).join("");
+      })
+      .catch(error => {
+        document.getElementById("activityBody").innerHTML =
+          `<tr><td colspan="4">Could not load activity: ${error.message || "Unknown error"}</td></tr>`;
+      });
+  </script>
 </body>
 </html>
