@@ -11,9 +11,6 @@ object DBFactory {
         val dbFile = File("src/main/kotlin/org/flightbooking/database/resources/Database.db")
         val dbPath = dbFile.absolutePath
 
-        println("Using database: $dbPath")
-        println("Database exists: ${dbFile.exists()}")
-
         Database.connect(
             url = "jdbc:sqlite:$dbPath",
             driver = "org.sqlite.JDBC"
