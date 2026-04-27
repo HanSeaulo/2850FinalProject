@@ -3,7 +3,6 @@ package org.flightbooking
 import access.FlightAccess
 import access.UserAccess
 import database.DBFactory
-import statsaccess.ManagementDashboard
 import io.ktor.http.*
 import io.ktor.http.formUrlEncode
 import io.ktor.serialization.kotlinx.json.json
@@ -18,45 +17,15 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.pebbletemplates.pebble.loader.ClasspathLoader
-import kotlinx.datetime.*
-import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.v1.core.SortOrder
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import tables.*
+import java.io.File
+import java.sql.DriverManager
 
-@Serializable
-data class FlightCardDto(
-    val id: Int,
-    val flightNumber: String,
-    val from: String,
-    val to: String,
-    val departureTime: String,
-    val arrivalTime: String,
-    val price: Double,
-    val availableSeats: Int
-)
+fun dbUrl(): String {
+    val dbFile = File("src/main/kotlin/org/flightbooking/database/resources/Database.db")
+    return "jdbc:sqlite:${dbFile.absolutePath}"
+}
 
-@Serializable
-data class FlightPriceDto(val flightId: Int, val price: Double)
-
-@Serializable
-data class ManagementStatsDto(
-    val todaysBookings: Int,
-    val yesterdayBookings: Int,
-    val activeFlights: Int,
-    val registeredUsers: Int,
-    val totalFlights: Int,
-    val openRequests: Int
-)
-
-@Serializable
-data class ActivityDto(
-    val time: String,
-    val action: String,
-    val details: String,
-    val status: String
-)
+fun sqlText(value: String?): String? = value?.takeIf { it.isNotBlank() }
 
 fun main() {
     embeddedServer(Netty, port = 8080) {
@@ -83,15 +52,17 @@ fun main() {
             get("/payment") { call.respondRedirect("/payment.html") }
             get("/report") { call.respondRedirect("/report.html") }
             get("/management") { call.respondRedirect("/management.html") }
+
             get("/search") {
                 val airports = FlightAccess().getAirportCodes()
                 call.respond(io.ktor.server.pebble.PebbleContent("search.peb", mapOf("airports" to airports)))
             }
+
             get("/flights") {
                 val query = call.request.queryParameters.formUrlEncode()
                 val suffix = if (query.isNotBlank()) "?$query" else ""
                 call.respondRedirect("/flights.html$suffix")
-}
+            }
 
             post("/signup") {
                 val params = call.receiveParameters()
@@ -155,108 +126,185 @@ fun main() {
             }
 
             get("/api/flights") {
-                val from = call.request.queryParameters["from"]
-                val to = call.request.queryParameters["to"]
-                val qty = call.request.queryParameters["qty"]?.toIntOrNull() ?: 1
-                val depart = call.request.queryParameters["depart"]
+    try {
+        val from = sqlText(call.request.queryParameters["from"])
+        val to = sqlText(call.request.queryParameters["to"])
+        val qty = call.request.queryParameters["qty"]?.toIntOrNull() ?: 1
+        val depart = sqlText(call.request.queryParameters["depart"])
 
-                val flights = FlightAccess().getAll()
-                    .asSequence()
-                    .filter { from.isNullOrBlank() || it.departureAirport == from }
-                    .filter { to.isNullOrBlank() || it.arrivalAirport == to }
-                    .filter { it.availableSeats >= qty }
-                    .filter {
-                        if (depart.isNullOrBlank()) true
-                        else it.departureTime.date.toString() >= depart
-                    }
-                    .sortedBy { it.departureTime }
-                    .map {
-                        FlightCardDto(
-                            id = it.id,
-                            flightNumber = it.flightNumber,
-                            from = it.departureAirport,
-                            to = it.arrivalAirport,
-                            departureTime = it.departureTime.toString(),
-                            arrivalTime = it.arrivalTime.toString(),
-                            price = it.price,
-                            availableSeats = it.availableSeats
+        val rows = mutableListOf<String>()
+
+        fun esc(value: String?): String =
+            (value ?: "")
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+
+        DriverManager.getConnection(dbUrl()).use { conn ->
+            val sql = """
+                SELECT id, flight_number, departure_airport, arrival_airport,
+                       departure_time, arrival_time, price, available_seats
+                FROM Flights
+                WHERE (? IS NULL OR departure_airport = ?)
+                  AND (? IS NULL OR arrival_airport = ?)
+                  AND available_seats >= ?
+                  AND (? IS NULL OR substr(departure_time, 1, 10) >= ?)
+                ORDER BY departure_time
+            """.trimIndent()
+
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setString(1, from)
+                stmt.setString(2, from)
+                stmt.setString(3, to)
+                stmt.setString(4, to)
+                stmt.setInt(5, qty)
+                stmt.setString(6, depart)
+                stmt.setString(7, depart)
+
+                stmt.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        rows.add(
+                            """
+                            {
+                              "id": ${rs.getInt("id")},
+                              "flightNumber": "${esc(rs.getString("flight_number"))}",
+                              "from": "${esc(rs.getString("departure_airport"))}",
+                              "to": "${esc(rs.getString("arrival_airport"))}",
+                              "departureTime": "${esc(rs.getString("departure_time"))}",
+                              "arrivalTime": "${esc(rs.getString("arrival_time"))}",
+                              "price": ${rs.getDouble("price")},
+                              "availableSeats": ${rs.getInt("available_seats")}
+                            }
+                            """.trimIndent()
                         )
                     }
-                    .toList()
-
-                call.respond(flights)
+                }
             }
+        }
 
+        call.respondText(
+            "[${rows.joinToString(",")}]",
+            ContentType.Application.Json
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
+        call.respondText(
+            "Flights route error: ${e::class.qualifiedName}: ${e.message}",
+            status = HttpStatusCode.InternalServerError
+        )
+    }
+}
             get("/flight-price") {
-                val flightId = call.request.queryParameters["flightId"]?.toIntOrNull()
-                val flight = flightId?.let { FlightAccess().getFlightById(it) }
-                if (flight == null) {
-                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "Flight not found"))
-                } else {
-                    call.respond(FlightPriceDto(flight.id, flight.price))
+                try {
+                    val flightId = call.request.queryParameters["flightId"]?.toIntOrNull()
+                    if (flightId == null) {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing flightId"))
+                        return@get
+                    }
+
+                    DriverManager.getConnection(dbUrl()).use { conn ->
+                        conn.prepareStatement("SELECT id, price FROM Flights WHERE id = ?").use { stmt ->
+                            stmt.setInt(1, flightId)
+                            stmt.executeQuery().use { rs ->
+                                if (rs.next()) {
+                                    call.respond(
+                                        mapOf(
+                                            "flightId" to rs.getInt("id"),
+                                            "price" to rs.getDouble("price")
+                                        )
+                                    )
+                                } else {
+                                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "Flight not found"))
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respondText(
+                        "Flight price route error: ${e::class.qualifiedName}: ${e.message}",
+                        status = HttpStatusCode.InternalServerError
+                    )
                 }
             }
 
             get("/api/management-stats") {
-    val dashboard = ManagementDashboard()
+                try {
+                    DriverManager.getConnection(dbUrl()).use { conn ->
+                        fun count(sql: String): Int =
+                            conn.createStatement().use { stmt ->
+                                stmt.executeQuery(sql).use { rs ->
+                                    if (rs.next()) rs.getInt(1) else 0
+                                }
+                            }
 
-    val stats = transaction {
-        ManagementStatsDto(
-            todaysBookings = dashboard.TodaysBookings(),
-            yesterdayBookings = dashboard.TodaysBookings(-1),
-            activeFlights = dashboard.ActiveFlights(),
-            registeredUsers = dashboard.RegisteredUsers(),
-            totalFlights = FlightsTable.selectAll().count().toInt(),
-            openRequests = RequestsTable.selectAll().count().toInt()
-        )
-    }
-
-    call.respond(stats)
-}
+                        call.respond(
+                            mapOf(
+                                "todaysBookings" to count("SELECT COUNT(*) FROM Bookings WHERE date(created_at) = date('now')"),
+                                "yesterdayBookings" to count("SELECT COUNT(*) FROM Bookings WHERE date(created_at) = date('now', '-1 day')"),
+                                "activeFlights" to count("SELECT COUNT(*) FROM Flights WHERE departure_time <= datetime('now') AND arrival_time >= datetime('now')"),
+                                "registeredUsers" to count("SELECT COUNT(*) FROM Users"),
+                                "totalFlights" to count("SELECT COUNT(*) FROM Flights"),
+                                "openRequests" to count("SELECT COUNT(*) FROM Requests WHERE lower(status) <> 'approved'")
+                            )
+                        )
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respondText(
+                        "Management route error: ${e::class.qualifiedName}: ${e.message}",
+                        status = HttpStatusCode.InternalServerError
+                    )
+                }
+            }
 
             get("/api/recent-activity") {
-                val activity = transaction {
-                    val bookingItems = BookingsTable.selectAll()
-                        .orderBy(BookingsTable.createdAt, SortOrder.DESC)
-                        .limit(5)
-                        .map {
-                            ActivityDto(
-                                time = it[BookingsTable.createdAt].toString(),
-                                action = "Booking created",
-                                details = "Booking #${it[BookingsTable.id]} • flight ${it[BookingsTable.flightId]}",
-                                status = it[BookingsTable.status].replaceFirstChar { c -> c.uppercase() }
-                            )
-                        }
+                try {
+                    val items = mutableListOf<Map<String, String>>()
 
-                    val userItems = UsersTable.selectAll()
-                        .orderBy(UsersTable.createdAt, SortOrder.DESC)
-                        .limit(5)
-                        .map {
-                            ActivityDto(
-                                time = it[UsersTable.createdAt].toString(),
-                                action = "User registered",
-                                details = it[UsersTable.email],
-                                status = "OK"
-                            )
-                        }
+                    DriverManager.getConnection(dbUrl()).use { conn ->
+                        val sql = """
+                            SELECT created_at AS time, 'Booking created' AS action,
+                                   'Booking #' || id || ' • flight ' || flight_id AS details,
+                                   status
+                            FROM Bookings
+                            UNION ALL
+                            SELECT created_at AS time, 'User registered' AS action,
+                                   email AS details,
+                                   'OK' AS status
+                            FROM Users
+                            UNION ALL
+                            SELECT created_at AS time, 'Request submitted' AS action,
+                                   type || ' for booking #' || booking_id AS details,
+                                   status
+                            FROM Requests
+                            ORDER BY time DESC
+                            LIMIT 10
+                        """.trimIndent()
 
-                    val requestItems = RequestsTable.selectAll()
-                        .orderBy(RequestsTable.createdAt, SortOrder.DESC)
-                        .limit(5)
-                        .map {
-                            ActivityDto(
-                                time = it[RequestsTable.createdAt].toString(),
-                                action = "Request submitted",
-                                details = "${it[RequestsTable.type]} for booking #${it[RequestsTable.bookingId]}",
-                                status = it[RequestsTable.status].replaceFirstChar { c -> c.uppercase() }
-                            )
+                        conn.createStatement().use { stmt ->
+                            stmt.executeQuery(sql).use { rs ->
+                                while (rs.next()) {
+                                    items.add(
+                                        mapOf(
+                                            "time" to (rs.getString("time") ?: ""),
+                                            "action" to (rs.getString("action") ?: ""),
+                                            "details" to (rs.getString("details") ?: ""),
+                                            "status" to (rs.getString("status") ?: "")
+                                        )
+                                    )
+                                }
+                            }
                         }
+                    }
 
-                    (bookingItems + userItems + requestItems)
-                        .sortedByDescending { it.time }
-                        .take(10)
+                    call.respond(items)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respondText(
+                        "Recent activity route error: ${e::class.qualifiedName}: ${e.message}",
+                        status = HttpStatusCode.InternalServerError
+                    )
                 }
-                call.respond(activity)
             }
 
             staticResources("/", "static")
