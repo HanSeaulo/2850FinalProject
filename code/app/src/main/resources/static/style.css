@@ -241,3 +241,42 @@ a { color: inherit; }
   .plane-seat { width: 42px; height: 46px; border-radius: 12px 12px 10px 10px; }
   .booking-meta-grid { grid-template-columns: 1fr; }
 }
+
+.confirmation-card {
+  max-width: 640px;
+}
+
+.confirmation-summary {
+  margin: 20px 0;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #f8fbff;
+}
+
+.confirmation-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.confirmation-row:last-child {
+  border-bottom: none;
+}
+
+.confirmation-row span {
+  color: #64748b;
+}
+
+.confirmation-row strong {
+  color: #0f172a;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}

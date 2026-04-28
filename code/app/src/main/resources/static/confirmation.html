@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Confirmed</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="auth-page">
+    <div class="auth-card confirmation-card">
+      <div class="brand">
+        <h1>Payment Successful</h1>
+        <p>Your booking has been confirmed.</p>
+      </div>
+
+      <div class="confirmation-summary">
+        <div class="confirmation-row">
+          <span>Booking ID</span>
+          <strong id="bookingId">—</strong>
+        </div>
+        <div class="confirmation-row">
+          <span>Flight ID</span>
+          <strong id="flightId">—</strong>
+        </div>
+        <div class="confirmation-row">
+          <span>Seats</span>
+          <strong id="seats">—</strong>
+        </div>
+        <div class="confirmation-row">
+          <span>Total Paid</span>
+          <strong id="total">—</strong>
+        </div>
+      </div>
+
+      <div class="confirmation-actions">
+        <a class="primary" href="/booking.html">View My Bookings</a>
+        <a class="button-outline" href="/search">Book Another Flight</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById("bookingId").textContent = params.get("bookingId") || "—";
+    document.getElementById("flightId").textContent = params.get("flightId") || "—";
+    document.getElementById("seats").textContent = (params.get("seats") || "").replaceAll(",", ", ") || "—";
+    document.getElementById("total").textContent = params.get("total") ? `$${params.get("total")}` : "—";
+  </script>
+</body>
+</html>

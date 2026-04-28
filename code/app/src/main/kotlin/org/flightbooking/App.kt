@@ -43,7 +43,7 @@ fun main() {
             json()
         }
 
-        data class UserSession(val name: String)
+        data class UserSession(val name: String, val email: String)
 
         install(Sessions) {
             cookie<UserSession>("user_session")
@@ -85,7 +85,7 @@ fun main() {
 
                 val success = UserAccess().createUser(name, email, password, "user")
                 if (success) {
-                    call.sessions.set(UserSession(name))
+                    call.sessions.set(UserSession(name, email))
                     call.respondRedirect("/home.html")
                 } else {
                     call.respondText("Email already exists")
@@ -104,7 +104,7 @@ fun main() {
 
                 val user = UserAccess().getUserByEmail(email)
                 if (user != null && user.password == password) {
-                    call.sessions.set(UserSession(user.name))
+                    call.sessions.set(UserSession(user.name, user.email))
                     call.respondRedirect("/home.html")
                 } else {
                     call.respondText("Wrong email or password")
@@ -114,56 +114,136 @@ fun main() {
             post("/payment") {
                 val session = call.sessions.get<UserSession>()
                 if (session == null) {
-                    call.respond(HttpStatusCode.Unauthorized, "Please log in first")
+                    call.respondRedirect("/login.html")
                     return@post
                 }
 
                 val params = call.receiveParameters()
+                val totalPrice = params["totalPrice"]?.toDoubleOrNull() ?: 0.0
+                val selectedSeats = (params["selectedSeats"] ?: "")
+                    .split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
                 val flightId = params["flightId"]?.toIntOrNull()
-                val selectedSeats = params["selectedSeats"] ?: ""
-                val totalPrice = params["totalPrice"] ?: "0"
 
-                if (flightId == null) {
-                    call.respond(HttpStatusCode.BadRequest, "Missing flightId")
+                if (flightId == null || selectedSeats.isEmpty()) {
+                    call.respondText("Missing flight or seats", status = HttpStatusCode.BadRequest)
                     return@post
                 }
 
+                var bookingId: Int? = null
+
                 try {
                     DriverManager.getConnection(dbUrl()).use { conn ->
-                        val userId = conn.prepareStatement(
-                            "SELECT id FROM Users WHERE name = ? LIMIT 1"
-                        ).use { stmt ->
-                            stmt.setString(1, session.name)
-                            stmt.executeQuery().use { rs ->
-                                if (rs.next()) rs.getInt("id") else null
+                        conn.autoCommit = false
+
+                        try {
+                            val userId = conn.prepareStatement(
+                                "SELECT id FROM Users WHERE email = ? LIMIT 1"
+                            ).use { stmt ->
+                                stmt.setString(1, session.email)
+                                stmt.executeQuery().use { rs ->
+                                    if (rs.next()) rs.getInt("id") else null
+                                }
                             }
-                        }
 
-                        if (userId == null) {
-                            call.respond(HttpStatusCode.Unauthorized, "User not found")
-                            return@post
-                        }
+                            if (userId == null) {
+                                conn.rollback()
+                                call.respondText("User not found", status = HttpStatusCode.Unauthorized)
+                                return@post
+                            }
 
-                        conn.prepareStatement(
-                            """
-                            INSERT INTO Bookings (user_id, flight_id, status, created_at)
-                            VALUES (?, ?, 'confirmed', datetime('now'))
-                            """.trimIndent()
-                        ).use { stmt ->
-                            stmt.setInt(1, userId)
-                            stmt.setInt(2, flightId)
-                            stmt.executeUpdate()
+                            val availability = conn.prepareStatement(
+                                "SELECT available_seats FROM Flights WHERE id = ? LIMIT 1"
+                            ).use { stmt ->
+                                stmt.setInt(1, flightId)
+                                stmt.executeQuery().use { rs ->
+                                    if (rs.next()) rs.getInt("available_seats") else null
+                                }
+                            }
+
+                            if (availability == null) {
+                                conn.rollback()
+                                call.respondText("Flight not found", status = HttpStatusCode.NotFound)
+                                return@post
+                            }
+
+                            if (availability < selectedSeats.size) {
+                                conn.rollback()
+                                call.respondText("Not enough seats remaining", status = HttpStatusCode.BadRequest)
+                                return@post
+                            }
+
+                            bookingId = conn.prepareStatement(
+                                """
+                                INSERT INTO Bookings (user_id, flight_id, status, total_price, created_at)
+                                VALUES (?, ?, 'confirmed', ?, datetime('now'))
+                                """.trimIndent(),
+                                java.sql.Statement.RETURN_GENERATED_KEYS
+                            ).use { stmt ->
+                                stmt.setInt(1, userId)
+                                stmt.setInt(2, flightId)
+                                stmt.setDouble(3, totalPrice)
+                                stmt.executeUpdate()
+
+                                stmt.generatedKeys.use { keys ->
+                                    if (keys.next()) keys.getInt(1) else null
+                                }
+                            }
+
+                            if (bookingId == null) {
+                                conn.rollback()
+                                call.respondText("Could not create booking", status = HttpStatusCode.InternalServerError)
+                                return@post
+                            }
+
+                            val parts = session.name.trim().split(Regex("\\s+"))
+                            val firstName = parts.firstOrNull() ?: "Guest"
+                            val lastName = if (parts.size > 1) parts.drop(1).joinToString(" ") else "Passenger"
+
+                            conn.prepareStatement(
+                                "INSERT INTO Passengers (booking_id, first_name, last_name, email) VALUES (?, ?, ?, ?)"
+                            ).use { stmt ->
+                                selectedSeats.forEachIndexed { index, _ ->
+                                    stmt.setInt(1, bookingId!!)
+                                    stmt.setString(2, if (index == 0) firstName else "$firstName ${index + 1}")
+                                    stmt.setString(3, lastName)
+                                    stmt.setString(
+                                        4,
+                                        if (index == 0) session.email else session.email.replace("@", "+${index + 1}@")
+                                    )
+                                    stmt.addBatch()
+                                }
+                                stmt.executeBatch()
+                            }
+
+                            conn.prepareStatement(
+                                "UPDATE Flights SET available_seats = available_seats - ? WHERE id = ?"
+                            ).use { stmt ->
+                                stmt.setInt(1, selectedSeats.size)
+                                stmt.setInt(2, flightId)
+                                stmt.executeUpdate()
+                            }
+
+                            conn.commit()
+                        } catch (e: Exception) {
+                            conn.rollback()
+                            throw e
                         }
                     }
 
-                    call.respondText(
-                        "Payment submitted successfully for flight $flightId. Seats: ${if (selectedSeats.isBlank()) "None selected" else selectedSeats}. Total: $$totalPrice",
-                        ContentType.Text.Plain
-                    )
+                    val next = listOf(
+                        "bookingId=${bookingId}",
+                        "flightId=$flightId",
+                        "seats=${selectedSeats.joinToString(",")}",
+                        "total=${"%.2f".format(totalPrice)}"
+                    ).joinToString("&")
+
+                    call.respondRedirect("/confirmation.html?$next")
                 } catch (e: Exception) {
                     e.printStackTrace()
                     call.respondText(
-                        "Payment route error: ${e.message}",
+                        "Payment route error: ${e::class.qualifiedName}: ${e.message}",
                         status = HttpStatusCode.InternalServerError
                     )
                 }
