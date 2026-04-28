@@ -4,97 +4,112 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Bookings</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">✈ Go Fly</div>
+      <nav>
+        <a href="/home.html">Home</a>
+        <a href="/search">Book a flight</a>
+        <a href="/booking.html" class="active">My Bookings</a>
+        <a href="/management.html">Management</a>
+      </nav>
+    </div>
+  </header>
 
-  <main class="container">
-    <div class="page-head">
+  <main class="container page booking-page">
+    <div class="page-header">
       <div>
-        <h1>My Bookings</h1>
-        <p class="sub">Manage upcoming trips, check past flights, and download invoices.</p>
+        <h1 class="page-title">My Bookings</h1>
+        <p class="page-subtitle">Only trips booked while signed in to your account appear here.</p>
       </div>
-
-      <a class="cta" href="/search">Book a flight</a>
+      <a class="button-outline" href="/search">Book another flight</a>
     </div>
 
-    <section class="controls">
-      <div class="tabs">
-        <button class="tab active" type="button">Upcoming</button>
-        <button class="tab" type="button">Past</button>
-      </div>
-
-      <div class="search">
-        <input type="text" placeholder="Search by city, airline, or booking ID…" />
-      </div>
-    </section>
-
-    <!-- POPULATED STATE (mock bookings) -->
-    <section class="cards">
-      <article class="card">
-        <div class="card-top">
-          <div class="route">
-            <div class="city">Austin (AUS)</div>
-            <div class="arrow">→</div>
-            <div class="city">Istanbul (IST)</div>
-          </div>
-
-          <span class="status upcoming">Upcoming</span>
-        </div>
-
-        <div class="meta">
-          <div><span class="label">Date</span> Mar 12, 2026</div>
-          <div><span class="label">Airline</span> Turkish Airlines</div>
-          <div><span class="label">Flight</span> TK-____</div>
-          <div><span class="label">Booking ID</span> BK9F2A</div>
-          <div><span class="label">Passengers</span> 1</div>
-          <div><span class="label">Total</span> $___</div>
-        </div>
-
-        <div class="actions">
-          <button type="button">View details</button>
-          <button type="button">Change flight</button>
-          <button type="button" class="danger">Cancel</button>
-          <button type="button" class="ghost">Download invoice</button>
-        </div>
-      </article>
-
-      <article class="card">
-        <div class="card-top">
-          <div class="route">
-            <div class="city">London (LHR)</div>
-            <div class="arrow">→</div>
-            <div class="city">Baku (GYD)</div>
-          </div>
-
-          <span class="status past">Past</span>
-        </div>
-
-        <div class="meta">
-          <div><span class="label">Date</span> Jan 05, 2026</div>
-          <div><span class="label">Airline</span> Azerbaijan Airlines</div>
-          <div><span class="label">Flight</span> J2-____</div>
-          <div><span class="label">Booking ID</span> H1K3QZ</div>
-          <div><span class="label">Passengers</span> 2</div>
-          <div><span class="label">Total</span> $___</div>
-        </div>
-
-        <div class="actions">
-          <button type="button">View details</button>
-          <button type="button" class="ghost">Download invoice</button>
-          <button type="button" class="ghost">Rebook</button>
-        </div>
-      </article>
-    </section>
-
-    <!-- EMPTY STATE (use this instead when no bookings)
-    <section class="empty">
-      <h2>No bookings yet</h2>
-      <p>When you book a flight, it’ll appear here with status, invoice, and manage options.</p>
-      <a class="cta" href="/search">Book your first flight</a>
-    </section>
-    -->
-
+    <div id="bookingNotice" class="booking-banner" hidden></div>
+    <div id="bookingsContainer" class="booking-grid">
+      <div class="booking-empty-card">Loading your bookings...</div>
+    </div>
   </main>
+
+  <script>
+    async function ensureLoggedIn() {
+      const response = await fetch('/current-user');
+      const name = (await response.text()).trim();
+      if (!name) {
+        window.location.href = '/login.html';
+        return false;
+      }
+      return true;
+    }
+
+    function formatDate(value) {
+      if (!value) return '—';
+      const date = new Date(value.replace(' ', 'T'));
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleString();
+    }
+
+    async function loadBookings() {
+      const container = document.getElementById('bookingsContainer');
+      const notice = document.getElementById('bookingNotice');
+      const params = new URLSearchParams(window.location.search);
+
+      if (params.get('created') === '1') {
+        notice.hidden = false;
+        notice.textContent = 'Booking confirmed. You can now view it below.';
+      }
+
+      try {
+        const response = await fetch('/api/my-bookings');
+        if (response.status === 401) {
+          window.location.href = '/login.html';
+          return;
+        }
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+        const bookings = await response.json();
+
+        if (!bookings.length) {
+          container.innerHTML = `
+            <div class="booking-empty-card">
+              <h2>No bookings yet</h2>
+              <p>Once you complete a flight purchase while signed in, it will appear here.</p>
+              <a class="btn-find" href="/search">Find flights</a>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = bookings.map(b => `
+          <article class="booking-card-live">
+            <div class="booking-card-top">
+              <div>
+                <div class="booking-route">${b.from} <span>→</span> ${b.to}</div>
+                <div class="booking-flight-meta">Flight ${b.flightNumber} · Booking #${b.id}</div>
+              </div>
+              <span class="booking-status ${String(b.status).toLowerCase()}">${b.status}</span>
+            </div>
+
+            <div class="booking-meta-grid">
+              <div><span>Departure</span><strong>${formatDate(b.departureTime)}</strong></div>
+              <div><span>Booked on</span><strong>${formatDate(b.createdAt)}</strong></div>
+              <div><span>Passengers</span><strong>${b.passengers}</strong></div>
+              <div><span>Total</span><strong>$${Number(b.totalPrice).toFixed(2)}</strong></div>
+            </div>
+          </article>
+        `).join('');
+      } catch (error) {
+        container.innerHTML = `<div class="booking-empty-card">Could not load your bookings: ${error.message}</div>`;
+      }
+    }
+
+    (async () => {
+      const ok = await ensureLoggedIn();
+      if (ok) loadBookings();
+    })();
+  </script>
 </body>
 </html>

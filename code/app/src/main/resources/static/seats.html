@@ -7,90 +7,147 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <nav class="navbar">
+  <header class="navbar">
     <div class="nav-container">
       <div class="logo">✈ Go Fly</div>
-      <div>
+      <nav>
         <a href="/home.html">Home</a>
-        <a href="/booking.html">View Bookings</a>
-        <a href="/login">Sign In</a>
+        <a href="/search">Book a flight</a>
+        <a href="/booking.html">My Bookings</a>
         <a href="/management.html">Management</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="seat-page container page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Choose Your Seats</h1>
+        <p class="page-subtitle">Pick the exact seats you want before payment.</p>
       </div>
+      <a class="button-outline" id="backToFlights" href="/flights.html">Back to flights</a>
     </div>
-  </nav>
 
-  <div class="container page">
-    <h1 class="page-title">Choose Your Seats</h1>
-    <p class="page-subtitle">Select the required number of seats before continuing to payment.</p>
+    <section class="plane-card">
+      <div class="plane-shell">
+        <div class="plane-nose">Front</div>
 
-    <div class="stat-card" id="seatSummary">Loading seat map...</div>
-    <div class="seat-map" id="seatMap"></div>
+        <div class="seat-legend">
+          <span><i class="legend-box available"></i> Available</span>
+          <span><i class="legend-box selected"></i> Selected</span>
+          <span><i class="legend-box taken"></i> Unavailable</span>
+        </div>
 
-    <div class="seat-actions">
-      <a class="button-outline" id="backToFlights" href="/flights.html">Back to Flights</a>
-      <button class="btn-find" id="continueBtn" type="button">Continue to Payment</button>
-    </div>
-  </div>
+        <div class="cabin-header">
+          <span></span>
+          <span>A</span><span>B</span><span>C</span>
+          <span class="aisle-label">aisle</span>
+          <span>D</span><span>E</span><span>F</span>
+        </div>
+        <div id="seatMap" class="seat-cabin"></div>
+      </div>
+
+      <aside class="seat-summary-card">
+        <h2>Trip summary</h2>
+        <p id="seatSummaryText">Loading seat map...</p>
+        <div class="summary-chip-row">
+          <span class="summary-chip">Flight <strong id="flightCodeChip">—</strong></span>
+          <span class="summary-chip">Passengers <strong id="passengerChip">1</strong></span>
+        </div>
+        <button class="btn-find" id="continueBtn" type="button">Continue to Payment</button>
+      </aside>
+    </section>
+  </main>
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const qty = Number(params.get("qty") || "1");
-    const selected = new Set((params.get("seats") || "").split(",").filter(Boolean));
-    const seatMap = document.getElementById("seatMap");
-    const seatSummary = document.getElementById("seatSummary");
-    const continueBtn = document.getElementById("continueBtn");
-    const backToFlights = document.getElementById("backToFlights");
+    const qty = Number(params.get('qty') || '1');
+    const selected = new Set((params.get('seats') || '').split(',').filter(Boolean));
+    const seatMap = document.getElementById('seatMap');
+    const seatSummaryText = document.getElementById('seatSummaryText');
+    const continueBtn = document.getElementById('continueBtn');
+    const backToFlights = document.getElementById('backToFlights');
+    const flightId = params.get('flightId') || '';
 
-    backToFlights.href = "/flights.html?" + params.toString();
+    document.getElementById('passengerChip').textContent = String(qty);
+    document.getElementById('flightCodeChip').textContent = flightId || '—';
+    backToFlights.href = '/flights.html?' + params.toString();
 
-    const rows = 8;
-    const cols = ["A", "B", "C", "D", "E", "F"];
-    const unavailable = new Set(["1C", "2D", "3A", "4F", "6B", "7E"]);
+    const rows = 12;
+    const leftSide = ['A', 'B', 'C'];
+    const rightSide = ['D', 'E', 'F'];
+    const unavailable = new Set(['1A', '1F', '2C', '2D', '3B', '4E', '5A', '5F', '7C', '8D', '9B', '10E']);
 
-    function render() {
-      seatMap.innerHTML = "";
+    function makeSeat(row, letter) {
+      const seatId = `${row}${letter}`;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'plane-seat';
+      button.innerHTML = `<span class="seat-letter">${letter}</span><span class="seat-number">${row}</span>`;
+      button.dataset.seat = seatId;
+      button.title = `Seat ${seatId}`;
+
+      if (unavailable.has(seatId)) {
+        button.classList.add('taken');
+        button.disabled = true;
+      }
+      if (selected.has(seatId)) {
+        button.classList.add('selected');
+      }
+
+      button.addEventListener('click', () => {
+        if (button.classList.contains('taken')) return;
+
+        if (!button.classList.contains('selected') && selected.size >= qty) {
+          alert(`Please select only ${qty} seat${qty === 1 ? '' : 's'}.`);
+          return;
+        }
+
+        button.classList.toggle('selected');
+        if (button.classList.contains('selected')) selected.add(seatId);
+        else selected.delete(seatId);
+        updateSummary();
+      });
+
+      return button;
+    }
+
+    function drawCabin() {
+      seatMap.innerHTML = '';
       for (let row = 1; row <= rows; row++) {
-        cols.forEach(col => {
-          const seat = `${row}${col}`;
-          const button = document.createElement("button");
-          button.type = "button";
-          button.textContent = seat;
-          button.className = "seat";
-          if (unavailable.has(seat)) {
-            button.classList.add("seat-unavailable");
-            button.disabled = true;
-          }
-          if (selected.has(seat)) button.classList.add("seat-selected");
+        const rowEl = document.createElement('div');
+        rowEl.className = 'seat-row-aircraft';
 
-          button.addEventListener("click", () => {
-            if (selected.has(seat)) {
-              selected.delete(seat);
-            } else {
-              if (selected.size >= qty) return;
-              selected.add(seat);
-            }
-            updateSummary();
-            render();
-          });
-          seatMap.appendChild(button);
-        });
+        const number = document.createElement('div');
+        number.className = 'row-number';
+        number.textContent = row;
+        rowEl.appendChild(number);
+
+        leftSide.forEach(letter => rowEl.appendChild(makeSeat(row, letter)));
+
+        const aisle = document.createElement('div');
+        aisle.className = 'aisle-gap';
+        rowEl.appendChild(aisle);
+
+        rightSide.forEach(letter => rowEl.appendChild(makeSeat(row, letter)));
+        seatMap.appendChild(rowEl);
       }
     }
 
     function updateSummary() {
-      const seats = Array.from(selected);
-      seatSummary.textContent = `Choose ${qty} seat(s). Selected: ${seats.length ? seats.join(", ") : "none yet"}.`;
-      continueBtn.disabled = selected.size !== qty;
+      const seats = Array.from(selected).sort();
+      seatSummaryText.innerHTML = `Choose <strong>${qty}</strong> seat(s). Selected: <strong>${seats.length ? seats.join(', ') : 'none yet'}</strong>.`;
+      continueBtn.disabled = seats.length !== qty;
     }
 
-    continueBtn.addEventListener("click", () => {
+    continueBtn.addEventListener('click', () => {
       const next = new URLSearchParams(window.location.search);
-      next.set("seats", Array.from(selected).join(","));
-      window.location.href = "/payment.html?" + next.toString();
+      next.set('seats', Array.from(selected).sort().join(','));
+      window.location.href = '/payment.html?' + next.toString();
     });
 
+    drawCabin();
     updateSummary();
-    render();
   </script>
 </body>
 </html>

@@ -67,7 +67,6 @@
       showingA = !showingA;
     }, 6000);
 
-    // ✅ USER NAME DISPLAY
     fetch("/current-user")
       .then(res => res.text())
       .then(name => {

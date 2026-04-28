@@ -3,7 +3,8 @@ package org.flightbooking
 import access.FlightAccess
 import access.UserAccess
 import database.DBFactory
-import io.ktor.http.*
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.formUrlEncode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
@@ -26,6 +27,13 @@ fun dbUrl(): String {
 }
 
 fun sqlText(value: String?): String? = value?.takeIf { it.isNotBlank() }
+
+fun esc(value: String?): String =
+    (value ?: "")
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
 
 fun main() {
     embeddedServer(Netty, port = 8080) {
@@ -104,15 +112,61 @@ fun main() {
             }
 
             post("/payment") {
-                val params = call.receiveParameters()
-                val totalPrice = params["totalPrice"] ?: "0"
-                val selectedSeats = params["selectedSeats"] ?: ""
-                val flightId = params["flightId"] ?: ""
+                val session = call.sessions.get<UserSession>()
+                if (session == null) {
+                    call.respond(HttpStatusCode.Unauthorized, "Please log in first")
+                    return@post
+                }
 
-                call.respondText(
-                    "Payment submitted successfully for flight $flightId. Seats: ${if (selectedSeats.isBlank()) "None selected" else selectedSeats}. Total: $$totalPrice",
-                    ContentType.Text.Plain
-                )
+                val params = call.receiveParameters()
+                val flightId = params["flightId"]?.toIntOrNull()
+                val selectedSeats = params["selectedSeats"] ?: ""
+                val totalPrice = params["totalPrice"] ?: "0"
+
+                if (flightId == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Missing flightId")
+                    return@post
+                }
+
+                try {
+                    DriverManager.getConnection(dbUrl()).use { conn ->
+                        val userId = conn.prepareStatement(
+                            "SELECT id FROM Users WHERE name = ? LIMIT 1"
+                        ).use { stmt ->
+                            stmt.setString(1, session.name)
+                            stmt.executeQuery().use { rs ->
+                                if (rs.next()) rs.getInt("id") else null
+                            }
+                        }
+
+                        if (userId == null) {
+                            call.respond(HttpStatusCode.Unauthorized, "User not found")
+                            return@post
+                        }
+
+                        conn.prepareStatement(
+                            """
+                            INSERT INTO Bookings (user_id, flight_id, status, created_at)
+                            VALUES (?, ?, 'confirmed', datetime('now'))
+                            """.trimIndent()
+                        ).use { stmt ->
+                            stmt.setInt(1, userId)
+                            stmt.setInt(2, flightId)
+                            stmt.executeUpdate()
+                        }
+                    }
+
+                    call.respondText(
+                        "Payment submitted successfully for flight $flightId. Seats: ${if (selectedSeats.isBlank()) "None selected" else selectedSeats}. Total: $$totalPrice",
+                        ContentType.Text.Plain
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respondText(
+                        "Payment route error: ${e.message}",
+                        status = HttpStatusCode.InternalServerError
+                    )
+                }
             }
 
             get("/current-user") {
@@ -126,73 +180,66 @@ fun main() {
             }
 
             get("/api/flights") {
-    try {
-        val from = sqlText(call.request.queryParameters["from"])
-        val to = sqlText(call.request.queryParameters["to"])
-        val qty = call.request.queryParameters["qty"]?.toIntOrNull() ?: 1
-        val depart = sqlText(call.request.queryParameters["depart"])
+                try {
+                    val from = sqlText(call.request.queryParameters["from"])
+                    val to = sqlText(call.request.queryParameters["to"])
+                    val qty = call.request.queryParameters["qty"]?.toIntOrNull() ?: 1
+                    val depart = sqlText(call.request.queryParameters["depart"])
 
-        val rows = mutableListOf<String>()
+                    val rows = mutableListOf<String>()
 
-        fun esc(value: String?): String =
-            (value ?: "")
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
+                    DriverManager.getConnection(dbUrl()).use { conn ->
+                        val sql = """
+                            SELECT id, flight_number, departure_airport, arrival_airport,
+                                   departure_time, arrival_time, price, available_seats
+                            FROM Flights
+                            WHERE (? IS NULL OR departure_airport = ?)
+                              AND (? IS NULL OR arrival_airport = ?)
+                              AND available_seats >= ?
+                              AND (? IS NULL OR substr(departure_time, 1, 10) >= ?)
+                            ORDER BY departure_time
+                        """.trimIndent()
 
-        DriverManager.getConnection(dbUrl()).use { conn ->
-            val sql = """
-                SELECT id, flight_number, departure_airport, arrival_airport,
-                       departure_time, arrival_time, price, available_seats
-                FROM Flights
-                WHERE (? IS NULL OR departure_airport = ?)
-                  AND (? IS NULL OR arrival_airport = ?)
-                  AND available_seats >= ?
-                  AND (? IS NULL OR substr(departure_time, 1, 10) >= ?)
-                ORDER BY departure_time
-            """.trimIndent()
+                        conn.prepareStatement(sql).use { stmt ->
+                            stmt.setString(1, from)
+                            stmt.setString(2, from)
+                            stmt.setString(3, to)
+                            stmt.setString(4, to)
+                            stmt.setInt(5, qty)
+                            stmt.setString(6, depart)
+                            stmt.setString(7, depart)
 
-            conn.prepareStatement(sql).use { stmt ->
-                stmt.setString(1, from)
-                stmt.setString(2, from)
-                stmt.setString(3, to)
-                stmt.setString(4, to)
-                stmt.setInt(5, qty)
-                stmt.setString(6, depart)
-                stmt.setString(7, depart)
-
-                stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        rows.add(
-                            """
-                            {
-                              "id": ${rs.getInt("id")},
-                              "flightNumber": "${esc(rs.getString("flight_number"))}",
-                              "from": "${esc(rs.getString("departure_airport"))}",
-                              "to": "${esc(rs.getString("arrival_airport"))}",
-                              "departureTime": "${esc(rs.getString("departure_time"))}",
-                              "arrivalTime": "${esc(rs.getString("arrival_time"))}",
-                              "price": ${rs.getDouble("price")},
-                              "availableSeats": ${rs.getInt("available_seats")}
+                            stmt.executeQuery().use { rs ->
+                                while (rs.next()) {
+                                    rows.add(
+                                        """
+                                        {
+                                          "id": ${rs.getInt("id")},
+                                          "flightNumber": "${esc(rs.getString("flight_number"))}",
+                                          "from": "${esc(rs.getString("departure_airport"))}",
+                                          "to": "${esc(rs.getString("arrival_airport"))}",
+                                          "departureTime": "${esc(rs.getString("departure_time"))}",
+                                          "arrivalTime": "${esc(rs.getString("arrival_time"))}",
+                                          "price": ${rs.getDouble("price")},
+                                          "availableSeats": ${rs.getInt("available_seats")}
+                                        }
+                                        """.trimIndent()
+                                    )
+                                }
                             }
-                            """.trimIndent()
-                        )
+                        }
                     }
+
+                    call.respondText("[${rows.joinToString(",")}]", ContentType.Application.Json)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respondText(
+                        "Flights route error: ${e.message}",
+                        status = HttpStatusCode.InternalServerError
+                    )
                 }
             }
-        }
 
-        call.respondText(
-            "[${rows.joinToString(",")}]",
-            ContentType.Application.Json
-        )
-    } catch (e: Exception) {
-        e.printStackTrace()
-        call.respondText(
-            "Flights route error: ${e::class.qualifiedName}: ${e.message}",
-            status = HttpStatusCode.InternalServerError
-        )
-    }
-}
             get("/flight-price") {
                 try {
                     val flightId = call.request.queryParameters["flightId"]?.toIntOrNull()
@@ -206,11 +253,9 @@ fun main() {
                             stmt.setInt(1, flightId)
                             stmt.executeQuery().use { rs ->
                                 if (rs.next()) {
-                                    call.respond(
-                                        mapOf(
-                                            "flightId" to rs.getInt("id"),
-                                            "price" to rs.getDouble("price")
-                                        )
+                                    call.respondText(
+                                        """{"flightId":${rs.getInt("id")},"price":${rs.getDouble("price")}}""",
+                                        ContentType.Application.Json
                                     )
                                 } else {
                                     call.respond(HttpStatusCode.NotFound, mapOf("error" to "Flight not found"))
@@ -221,7 +266,7 @@ fun main() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                     call.respondText(
-                        "Flight price route error: ${e::class.qualifiedName}: ${e.message}",
+                        "Flight price route error: ${e.message}",
                         status = HttpStatusCode.InternalServerError
                     )
                 }
@@ -237,21 +282,23 @@ fun main() {
                                 }
                             }
 
-                        call.respond(
-                            mapOf(
-                                "todaysBookings" to count("SELECT COUNT(*) FROM Bookings WHERE date(created_at) = date('now')"),
-                                "yesterdayBookings" to count("SELECT COUNT(*) FROM Bookings WHERE date(created_at) = date('now', '-1 day')"),
-                                "activeFlights" to count("SELECT COUNT(*) FROM Flights WHERE departure_time <= datetime('now') AND arrival_time >= datetime('now')"),
-                                "registeredUsers" to count("SELECT COUNT(*) FROM Users"),
-                                "totalFlights" to count("SELECT COUNT(*) FROM Flights"),
-                                "openRequests" to count("SELECT COUNT(*) FROM Requests WHERE lower(status) <> 'approved'")
-                            )
-                        )
+                        val json = """
+                            {
+                              "todaysBookings": ${count("SELECT COUNT(*) FROM Bookings WHERE date(created_at) = date('now')")},
+                              "yesterdayBookings": ${count("SELECT COUNT(*) FROM Bookings WHERE date(created_at) = date('now', '-1 day')")},
+                              "activeFlights": ${count("SELECT COUNT(*) FROM Flights WHERE departure_time <= datetime('now') AND arrival_time >= datetime('now')")},
+                              "registeredUsers": ${count("SELECT COUNT(*) FROM Users")},
+                              "totalFlights": ${count("SELECT COUNT(*) FROM Flights")},
+                              "openRequests": ${count("SELECT COUNT(*) FROM Requests WHERE lower(status) <> 'approved'")}
+                            }
+                        """.trimIndent()
+
+                        call.respondText(json, ContentType.Application.Json)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     call.respondText(
-                        "Management route error: ${e::class.qualifiedName}: ${e.message}",
+                        "Management route error: ${e.message}",
                         status = HttpStatusCode.InternalServerError
                     )
                 }
@@ -259,7 +306,7 @@ fun main() {
 
             get("/api/recent-activity") {
                 try {
-                    val items = mutableListOf<Map<String, String>>()
+                    val rows = mutableListOf<String>()
 
                     DriverManager.getConnection(dbUrl()).use { conn ->
                         val sql = """
@@ -284,24 +331,74 @@ fun main() {
                         conn.createStatement().use { stmt ->
                             stmt.executeQuery(sql).use { rs ->
                                 while (rs.next()) {
-                                    items.add(
-                                        mapOf(
-                                            "time" to (rs.getString("time") ?: ""),
-                                            "action" to (rs.getString("action") ?: ""),
-                                            "details" to (rs.getString("details") ?: ""),
-                                            "status" to (rs.getString("status") ?: "")
-                                        )
+                                    rows.add(
+                                        """
+                                        {
+                                          "time": "${esc(rs.getString("time"))}",
+                                          "action": "${esc(rs.getString("action"))}",
+                                          "details": "${esc(rs.getString("details"))}",
+                                          "status": "${esc(rs.getString("status"))}"
+                                        }
+                                        """.trimIndent()
                                     )
                                 }
                             }
                         }
                     }
 
-                    call.respond(items)
+                    call.respondText("[${rows.joinToString(",")}]", ContentType.Application.Json)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     call.respondText(
-                        "Recent activity route error: ${e::class.qualifiedName}: ${e.message}",
+                        "Recent activity route error: ${e.message}",
+                        status = HttpStatusCode.InternalServerError
+                    )
+                }
+            }
+
+            get("/api/my-bookings") {
+                val session = call.sessions.get<UserSession>()
+                if (session == null) {
+                    call.respond(HttpStatusCode.Unauthorized, "You must be logged in")
+                    return@get
+                }
+
+                try {
+                    val rows = mutableListOf<String>()
+
+                    DriverManager.getConnection(dbUrl()).use { conn ->
+                        val sql = """
+                            SELECT b.id, b.flight_id, b.status, b.created_at
+                            FROM Bookings b
+                            JOIN Users u ON b.user_id = u.id
+                            WHERE u.name = ?
+                            ORDER BY b.created_at DESC
+                        """.trimIndent()
+
+                        conn.prepareStatement(sql).use { stmt ->
+                            stmt.setString(1, session.name)
+                            stmt.executeQuery().use { rs ->
+                                while (rs.next()) {
+                                    rows.add(
+                                        """
+                                        {
+                                          "id": "${esc(rs.getString("id"))}",
+                                          "flightId": "${esc(rs.getString("flight_id"))}",
+                                          "status": "${esc(rs.getString("status"))}",
+                                          "createdAt": "${esc(rs.getString("created_at"))}"
+                                        }
+                                        """.trimIndent()
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    call.respondText("[${rows.joinToString(",")}]", ContentType.Application.Json)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respondText(
+                        "My bookings route error: ${e.message}",
                         status = HttpStatusCode.InternalServerError
                     )
                 }

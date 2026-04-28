@@ -7,31 +7,41 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <main class="auth-page">
-    <div class="auth-card">
-      <div class="brand">
-        <h1>Sign Up</h1>
-        <p>Create an account to save passengers and track bookings.</p>
+  <main class="auth-page auth-shell">
+    <section class="auth-card auth-card-wide">
+      <div class="auth-copy">
+        <span class="auth-kicker">Create your account</span>
+        <h1>Book flights with your own travel dashboard</h1>
+        <p>Once you sign up, every booking you make while logged in is tied to your account and visible on your bookings page.</p>
+        <ul class="auth-benefits">
+          <li>View only your own bookings</li>
+          <li>Get a smoother checkout flow</li>
+          <li>Keep your travel history together</li>
+        </ul>
       </div>
 
-      <form class="auth-form" action="/signup" method="post">
-        <label for="name">Full name</label>
-        <input id="name" name="name" type="text" placeholder="Your full name" required />
+      <div class="auth-panel">
+        <div class="brand">
+          <h2>Sign Up</h2>
+          <p>Create an account to start booking.</p>
+        </div>
 
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" placeholder="you@example.com" required />
+        <form class="auth-form" action="/signup" method="post">
+          <label for="name">Full name</label>
+          <input id="name" name="name" type="text" placeholder="Your full name" required />
 
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" placeholder="Create a password" required />
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" required />
 
-        <button type="submit" class="primary">Create Account</button>
-      </form>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="Create a password" required />
 
-      <p class="footer-text">
-        Already have an account?
-        <a class="link" href="/login.html">Log in</a>
-      </p>
-    </div>
+          <button type="submit" class="primary">Create Account</button>
+        </form>
+
+        <p class="footer-text">Already have an account? <a class="link" href="/login.html">Log in</a></p>
+      </div>
+    </section>
   </main>
 </body>
 </html>
