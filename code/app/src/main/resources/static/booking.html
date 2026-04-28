@@ -95,6 +95,7 @@
 
             <div class="booking-meta-grid">
               <div><span>Departure</span><strong>${formatDate(b.departureTime)}</strong></div>
+              <div><span>Arrival</span><strong>${formatDate(b.arrivalTime)}</strong></div>
               <div><span>Booked on</span><strong>${formatDate(b.createdAt)}</strong></div>
               <div><span>Passengers</span><strong>${b.passengers}</strong></div>
               <div><span>Total</span><strong>$${Number(b.totalPrice).toFixed(2)}</strong></div>

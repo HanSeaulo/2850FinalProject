@@ -437,53 +437,84 @@ fun main() {
             }
 
             get("/api/my-bookings") {
-                val session = call.sessions.get<UserSession>()
-                if (session == null) {
-                    call.respond(HttpStatusCode.Unauthorized, "You must be logged in")
-                    return@get
-                }
+    val session = call.sessions.get<UserSession>()
+    if (session == null) {
+        call.respond(HttpStatusCode.Unauthorized, "You must be logged in")
+        return@get
+    }
 
-                try {
-                    val rows = mutableListOf<String>()
+    try {
+        val rows = mutableListOf<String>()
 
-                    DriverManager.getConnection(dbUrl()).use { conn ->
-                        val sql = """
-                            SELECT b.id, b.flight_id, b.status, b.created_at
-                            FROM Bookings b
-                            JOIN Users u ON b.user_id = u.id
-                            WHERE u.name = ?
-                            ORDER BY b.created_at DESC
-                        """.trimIndent()
+        DriverManager.getConnection(dbUrl()).use { conn ->
+            val sql = """
+                SELECT 
+                    b.id,
+                    b.flight_id,
+                    b.status,
+                    b.created_at,
+                    COALESCE(b.total_price, 0) AS total_price,
+                    f.flight_number,
+                    f.departure_airport,
+                    f.arrival_airport,
+                    f.departure_time,
+                    f.arrival_time,
+                    COUNT(p.id) AS passengers
+                FROM Bookings b
+                JOIN Users u ON b.user_id = u.id
+                JOIN Flights f ON b.flight_id = f.id
+                LEFT JOIN Passengers p ON p.booking_id = b.id
+                WHERE u.email = ?
+                GROUP BY 
+                    b.id,
+                    b.flight_id,
+                    b.status,
+                    b.created_at,
+                    b.total_price,
+                    f.flight_number,
+                    f.departure_airport,
+                    f.arrival_airport,
+                    f.departure_time,
+                    f.arrival_time
+                ORDER BY b.created_at DESC
+            """.trimIndent()
 
-                        conn.prepareStatement(sql).use { stmt ->
-                            stmt.setString(1, session.name)
-                            stmt.executeQuery().use { rs ->
-                                while (rs.next()) {
-                                    rows.add(
-                                        """
-                                        {
-                                          "id": "${esc(rs.getString("id"))}",
-                                          "flightId": "${esc(rs.getString("flight_id"))}",
-                                          "status": "${esc(rs.getString("status"))}",
-                                          "createdAt": "${esc(rs.getString("created_at"))}"
-                                        }
-                                        """.trimIndent()
-                                    )
-                                }
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setString(1, session.email)
+
+                stmt.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        rows.add(
+                            """
+                            {
+                              "id": "${esc(rs.getString("id"))}",
+                              "flightId": "${esc(rs.getString("flight_id"))}",
+                              "status": "${esc(rs.getString("status"))}",
+                              "createdAt": "${esc(rs.getString("created_at"))}",
+                              "totalPrice": ${rs.getDouble("total_price")},
+                              "flightNumber": "${esc(rs.getString("flight_number"))}",
+                              "from": "${esc(rs.getString("departure_airport"))}",
+                              "to": "${esc(rs.getString("arrival_airport"))}",
+                              "departureTime": "${esc(rs.getString("departure_time"))}",
+                              "arrivalTime": "${esc(rs.getString("arrival_time"))}",
+                              "passengers": ${rs.getInt("passengers")}
                             }
-                        }
+                            """.trimIndent()
+                        )
                     }
-
-                    call.respondText("[${rows.joinToString(",")}]", ContentType.Application.Json)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    call.respondText(
-                        "My bookings route error: ${e.message}",
-                        status = HttpStatusCode.InternalServerError
-                    )
                 }
             }
+        }
 
+        call.respondText("[${rows.joinToString(",")}]", ContentType.Application.Json)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        call.respondText(
+            "My bookings route error: ${e.message}",
+            status = HttpStatusCode.InternalServerError
+        )
+    }
+}
             staticResources("/", "static")
         }
     }.start(wait = true)
