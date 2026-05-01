@@ -280,3 +280,147 @@ a { color: inherit; }
   flex-wrap: wrap;
   margin-top: 20px;
 }
+
+/* --- Flight Result Card Enhancements --- */
+
+/* Horizontal route layout */
+.flight-route-container {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 15px;
+}
+
+.route-node {
+  display: flex;
+  flex-direction: column;
+}
+
+.airport-code {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--white);
+}
+
+.time-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* Center duration block to fill empty space */
+.duration-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.8rem;
+}
+
+.duration-line {
+  font-size: 1.2rem;
+  margin: -4px 0;
+  opacity: 0.6;
+}
+
+.direct-tag {
+  letter-spacing: 2px;
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+
+.next-day-badge {
+  color: #ff9800;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.flight-meta-info {
+  font-size: 0.85rem;
+  color: var(--muted);
+  display: flex;
+  gap: 15px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+/* Invalid (Time Conflict) Styling */
+.invalid-flight {
+  opacity: 0.4;
+  pointer-events: none; 
+  filter: grayscale(1);
+}
+
+/* Restores the larger, balanced look for flight cards */
+.flight-route-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 500px; /* Adjust based on your preference */
+  margin-bottom: 15px;
+}
+
+.route-node {
+  display: flex;
+  flex-direction: column;
+  min-width: 80px;
+}
+
+.airport-code {
+  font-size: 1.8rem; /* Bigger size as requested */
+  font-weight: 800;
+  color: var(--white);
+  line-height: 1.2;
+}
+
+.time-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--white); /* Changed from gray/muted to white */
+}
+
+.date-sub {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7); /* Softer white instead of gray */
+  margin-top: 2px;
+}
+
+.duration-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+  padding: 0 20px;
+}
+
+.duration-text {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 4px;
+}
+
+.duration-line {
+  font-size: 1.2rem;
+  letter-spacing: -2px;
+  opacity: 0.6;
+}
+
+.direct-tag {
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-top: 4px;
+  opacity: 0.8;
+}
+
+/* Metadata row at the bottom */
+.flight-meta-info {
+  display: flex;
+  gap: 15px;
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 5px;
+}

@@ -4,9 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Flights</title>
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css" />
 </head>
-
 <body>
   <nav class="navbar">
     <div class="nav-container">
@@ -22,55 +21,170 @@
 
   <div class="container page">
     <h1 class="page-title">Available Flights</h1>
-    <p class="page-subtitle">Confirm a flight, then choose seats before payment.</p>
+    <p class="page-subtitle">Select your flights, then choose seats before payment.</p>
+    <div id="searchSummary" class="stat-card" style="display:none;"></div>
+    
+    <div id="outboundSection">
+       <h2 style="color: white; margin: 20px 0;">1. Outbound Flights</h2>
+       <div id="flightsList"></div>
+    </div>
 
-    {% if error %}
-      <div class="stat-card">
-        {{ error }}
-      </div>
-    {% elseif flights is empty %}
-      <div class="stat-card">
-        No flights available right now.
-      </div>
-    {% else %}
-      {% for f in flights %}
-        <div class="flight-result-card">
-          <div class="flight-left">
-            <div class="flight-route">
-              <span>{{ f.departureAirport }}</span>
-              <span class="flight-route-icon"> → ✈ → </span>
-              <span>{{ f.arrivalAirport }}</span>
-            </div>
+    <div id="returnSection" style="display:none;">
+       <h2 style="color: white; margin: 40px 0 20px 0;">2. Return Flights</h2>
+       <div id="returnFlightsList"></div>
+    </div>
 
-            <div class="flight-number-small">
-              Flight {{ f.flightNumber }}
-            </div>
-          </div>
-
-          <div class="flight-middle">
-            <div class="flight-number-small">
-              <strong>Departure:</strong> {{ f.departureTime }}
-            </div>
-
-            <div class="flight-number-small">
-              <strong>Arrival:</strong> {{ f.arrivalTime }}
-            </div>
-
-            <div class="flight-number-small">
-              <strong>Seats left:</strong> {{ f.availableSeats }}
-            </div>
-          </div>
-
-          <div class="flight-right">
-            <div class="flight-price-big">£{{ f.price }}</div>
-
-            <a href="/seats.html?flightId={{ f.id }}" class="btn-find">
-              Select Flight
-            </a>
-          </div>
-        </div>
-      {% endfor %}
-    {% endif %}
+    <div style="text-align: center; margin-top: 40px;">
+      <button id="finalConfirmBtn" class="btn-find" style="padding: 15px 50px;" onclick="goToSeats()">
+        Continue to Seat Selection
+      </button>
+    </div>
   </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    var selectedOutboundId = null;
+    var outboundTime = null;
+    var selectedReturnId = null;
+    var returnTime = null;
+    var isRoundTrip = params.get("tripType") === "roundtrip";
+
+    function escapeHtml(value) {
+      return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+    }
+
+    function calculateDuration(start, end) {
+      var diff = new Date(end) - new Date(start);
+      var hours = Math.floor(diff / (1000 * 60 * 60));
+      var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      return hours + "h " + minutes + "m";
+    }
+
+    function selectOutbound(id, timeStr) {
+      selectedOutboundId = id;
+      outboundTime = timeStr;
+      document.querySelectorAll("#flightsList .btn-find").forEach(btn => btn.textContent = "Select");
+      event.target.textContent = "Selected ✓";
+      if (isRoundTrip) updateReturnFlightsAvailability();
+    }
+
+    function updateReturnFlightsAvailability() {
+      document.querySelectorAll("#returnFlightsList .flight-result-card").forEach(card => {
+        var flightTime = card.getAttribute("data-time");
+        var btn = card.querySelector(".btn-find");
+        if (new Date(flightTime) < new Date(outboundTime)) {
+          card.classList.add("invalid-flight");
+          btn.disabled = true;
+          if (card.id === "return-card-" + selectedReturnId) {
+            selectedReturnId = null; returnTime = null; btn.textContent = "Select";
+          }
+        } else {
+          card.classList.remove("invalid-flight");
+          btn.disabled = false;
+        }
+      });
+    }
+
+    function selectReturn(id, timeStr) {
+      selectedReturnId = id;
+      returnTime = timeStr;
+      document.querySelectorAll("#returnFlightsList .btn-find").forEach(btn => btn.textContent = "Select");
+      event.target.textContent = "Selected ✓";
+    }
+
+    function goToSeats() {
+      if (!selectedOutboundId) { alert("Please select an outbound flight first."); return; }
+      if (isRoundTrip && !selectedReturnId) { alert("Please select a return flight."); return; }
+      const next = new URLSearchParams(window.location.search);
+      next.set("flightId", selectedOutboundId);
+      if (isRoundTrip) next.set("returnFlightId", selectedReturnId);
+      window.location.href = "/seats.html?" + next.toString();
+    }
+
+    async function fetchFlights(from, to, date, targetId, selectFunc) {
+      const container = document.getElementById(targetId);
+      const apiParams = new URLSearchParams({ from, to, date });
+      try {
+        const response = await fetch("/api/flights?" + apiParams.toString());
+        const flights = await response.json();
+        if (!flights || !flights.length) {
+          container.innerHTML = `<div class="stat-card">No flights found for this route.</div>`;
+          return;
+        }
+        container.innerHTML = flights.map(f => {
+          const depTimeFull = f.departureTime.replace("T", " ");
+          const arrTimeFull = f.arrivalTime.replace("T", " ");
+          
+          // Split into components
+          const depDate = depTimeFull.split(' ')[0];
+          const arrDate = arrTimeFull.split(' ')[0];
+          const depTime = depTimeFull.split(' ')[1].substring(0, 5);
+          const arrTime = arrTimeFull.split(' ')[1].substring(0, 5);
+
+          const duration = calculateDuration(f.departureTime, f.arrivalTime);
+          const isNextDay = new Date(f.arrivalTime).toLocaleDateString() !== new Date(f.departureTime).toLocaleDateString();
+          const cardId = targetId === "returnFlightsList" ? `id="return-card-${f.id}"` : "";
+          
+          return `
+            <div class="flight-result-card" ${cardId} data-time="${depTimeFull}">
+              <div class="flight-left">
+                <div class="flight-route-container">
+                  <!-- Departure Side -->
+                  <div class="route-node">
+                    <span class="airport-code">${escapeHtml(f.from || f.departureAirport)}</span>
+                    <span class="time-label">${depTime}</span>
+                    <span class="date-sub">${depDate}</span>
+                  </div>
+
+                  <!-- Middle Duration Section -->
+                  <div class="duration-info">
+                    <span class="duration-text">${duration}</span>
+                    <span class="duration-line">──────── ✈ ────────</span>
+                    <span class="direct-tag">DIRECT</span>
+                  </div>
+
+                  <!-- Arrival Side -->
+                  <div class="route-node">
+                    <span class="airport-code">${escapeHtml(f.to || f.arrivalAirport)}</span>
+                    <span class="time-label">
+                      ${arrTime}
+                      ${isNextDay ? '<span style="color: #ff9800; font-size: 0.7rem; vertical-align: top;">+1</span>' : ''}
+                    </span>
+                    <span class="date-sub">${arrDate}</span>
+                  </div>
+                </div>
+
+                <div class="flight-meta-info">
+                  <span><strong>Flight:</strong> ${escapeHtml(f.flightNumber)}</span>
+                  <span style="opacity: 0.4;">|</span>
+                  <span><strong>Seats:</strong> ${Number(f.availableSeats)} left</span>
+                </div>
+              </div>
+
+              <div class="flight-right">
+                <div class="flight-price-big">$${Number(f.price).toFixed(2)}</div>
+                <button class="btn-find" onclick="${selectFunc}(${Number(f.id)}, '${depTimeFull}')">Select</button>
+              </div>
+            </div>`;
+        }).join("");
+      } catch (error) { container.innerHTML = `<div class="stat-card">Error loading flights.</div>`; }
+    }
+
+    async function init() {
+      const from = params.get("from"), to = params.get("to"), departDate = params.get("depart"), returnDate = params.get("return"), qty = params.get("qty") || "1";
+      
+      const summary = document.getElementById("searchSummary");
+      summary.style.display = "block";
+      summary.textContent = `Search: ${from || ''} to ${to || ''} for ${qty} passenger(s).`;
+      
+      await fetchFlights(from, to, departDate, "flightsList", "selectOutbound");
+      
+      if (isRoundTrip) {
+        document.getElementById("returnSection").style.display = "block";
+        await fetchFlights(to, from, returnDate, "returnFlightsList", "selectReturn");
+      }
+    }
+    init();
+  </script>
 </body>
 </html>

@@ -22,8 +22,8 @@
   <main class="seat-page container page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Choose Your Seats</h1>
-        <p class="page-subtitle">Pick the exact seats you want before payment.</p>
+        <h1 class="page-title" id="pageTitle">Choose Your Seats</h1>
+        <p class="page-subtitle" id="pageSubtitle">Pick the exact seats you want before payment.</p>
       </div>
       <a class="button-outline" id="backToFlights" href="/flights.html">Back to flights</a>
     </div>
@@ -48,7 +48,7 @@
       </div>
 
       <aside class="seat-summary-card">
-        <h2>Trip summary</h2>
+        <h2 id="summaryTitle">Trip summary</h2>
         <p id="seatSummaryText">Loading seat map...</p>
         <div class="summary-chip-row">
           <span class="summary-chip">Flight <strong id="flightCodeChip">—</strong></span>
@@ -62,20 +62,37 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const qty = Number(params.get('qty') || '1');
-    const selected = new Set((params.get('seats') || '').split(',').filter(Boolean));
+    const returnFlightId = params.get('returnFlightId');
+    const outboundSeats = params.get('seats'); // Check if outbound is already done
+    
+    // Determine if we are currently picking the outbound or the return
+    const isPickingReturn = !!(returnFlightId && outboundSeats);
+    const currentFlightId = isPickingReturn ? returnFlightId : (params.get('flightId') || '');
+
+    // UI Updates for context
+    if (isPickingReturn) {
+      document.getElementById('pageTitle').textContent = "Choose Return Seats";
+      document.getElementById('summaryTitle').textContent = "Return Trip Summary";
+      document.getElementById('continueBtn').textContent = "Continue to Payment";
+    } else if (returnFlightId) {
+      document.getElementById('pageTitle').textContent = "Choose Outbound Seats";
+      document.getElementById('continueBtn').textContent = "Next Flight Seats";
+    }
+
+    const selected = new Set(); 
     const seatMap = document.getElementById('seatMap');
     const seatSummaryText = document.getElementById('seatSummaryText');
     const continueBtn = document.getElementById('continueBtn');
     const backToFlights = document.getElementById('backToFlights');
-    const flightId = params.get('flightId') || '';
 
     document.getElementById('passengerChip').textContent = String(qty);
-    document.getElementById('flightCodeChip').textContent = flightId || '—';
+    document.getElementById('flightCodeChip').textContent = currentFlightId || '—';
     backToFlights.href = '/flights.html?' + params.toString();
 
     const rows = 12;
     const leftSide = ['A', 'B', 'C'];
     const rightSide = ['D', 'E', 'F'];
+    // Mock unavailable seats - in a real app, these would change per flightId
     const unavailable = new Set(['1A', '1F', '2C', '2D', '3B', '4E', '5A', '5F', '7C', '8D', '9B', '10E']);
 
     function makeSeat(row, letter) {
@@ -85,24 +102,17 @@
       button.className = 'plane-seat';
       button.innerHTML = `<span class="seat-letter">${letter}</span><span class="seat-number">${row}</span>`;
       button.dataset.seat = seatId;
-      button.title = `Seat ${seatId}`;
 
       if (unavailable.has(seatId)) {
         button.classList.add('taken');
         button.disabled = true;
       }
-      if (selected.has(seatId)) {
-        button.classList.add('selected');
-      }
 
       button.addEventListener('click', () => {
-        if (button.classList.contains('taken')) return;
-
         if (!button.classList.contains('selected') && selected.size >= qty) {
           alert(`Please select only ${qty} seat${qty === 1 ? '' : 's'}.`);
           return;
         }
-
         button.classList.toggle('selected');
         if (button.classList.contains('selected')) selected.add(seatId);
         else selected.delete(seatId);
@@ -117,18 +127,14 @@
       for (let row = 1; row <= rows; row++) {
         const rowEl = document.createElement('div');
         rowEl.className = 'seat-row-aircraft';
-
         const number = document.createElement('div');
         number.className = 'row-number';
         number.textContent = row;
         rowEl.appendChild(number);
-
         leftSide.forEach(letter => rowEl.appendChild(makeSeat(row, letter)));
-
         const aisle = document.createElement('div');
         aisle.className = 'aisle-gap';
         rowEl.appendChild(aisle);
-
         rightSide.forEach(letter => rowEl.appendChild(makeSeat(row, letter)));
         seatMap.appendChild(rowEl);
       }
@@ -141,9 +147,21 @@
     }
 
     continueBtn.addEventListener('click', () => {
-      const next = new URLSearchParams(window.location.search);
-      next.set('seats', Array.from(selected).sort().join(','));
-      window.location.href = '/payment.html?' + next.toString();
+      const seatsString = Array.from(selected).sort().join(',');
+      
+      if (returnFlightId && !isPickingReturn) {
+        // If we just finished outbound and there's a return, reload for the return flight
+        params.set('seats', seatsString);
+        window.location.href = 'seats.html?' + params.toString();
+      } else {
+        // If one-way or we just finished the return leg, go to payment
+        if (isPickingReturn) {
+          params.set('returnSeats', seatsString);
+        } else {
+          params.set('seats', seatsString);
+        }
+        window.location.href = '/payment.html?' + params.toString();
+      }
     });
 
     drawCabin();

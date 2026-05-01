@@ -51,11 +51,11 @@
             <div>
               <label for="to">To</label>
               <select id="to" name="to" required>
-  <option value="" disabled selected>Select destination airport</option>
-  {% for airport in airports %}
-    <option value="{{ airport }}">{{ airport }}</option>
-  {% endfor %}
-</select>
+                <option value="" disabled selected>Select destination airport</option>
+                {% for airport in airports %}
+                  <option value="{{ airport }}">{{ airport }}</option>
+                {% endfor %}
+              </select>
             </div>
           </div>
 
@@ -65,9 +65,9 @@
               <input type="date" id="depart" name="depart" required />
             </div>
 
-            <div>
+            <div id="return-container">
               <label for="return">Return</label>
-              <input type="date" id="return" name="return" />
+              <input type="date" id="return" name="return" required />
             </div>
           </div>
 
@@ -94,6 +94,49 @@
     </div>
   </main>
 
+  <script>
+    // Get all the elements we need to talk to
+    var returnContainer = document.getElementById('return-container');
+    var returnInput = document.getElementById('return');
+    var departInput = document.getElementById('depart');
+
+    // This function hides or shows the return date
+    function toggleReturnField() {
+      // Check which radio button is currently clicked
+      var tripType = document.querySelector('input[name="tripType"]:checked').value;
+
+      if (tripType === 'oneway') {
+        returnContainer.style.display = 'none';
+        returnInput.value = ''; 
+        returnInput.required = false;
+      } else {
+        returnContainer.style.display = 'block';
+        returnInput.required = true;
+      }
+    }
+
+    // When the departure date changes, update the minimum return date
+    departInput.onchange = function() {
+      if (departInput.value != "") {
+        returnInput.min = departInput.value; 
+        
+        // Clear return date if it's now earlier than departure
+        if (returnInput.value < departInput.value) {
+          returnInput.value = "";
+        }
+      }
+    };
+
+    // Add listeners to the radio buttons
+    // We use a selector to find the inputs by name
+    var radios = document.getElementsByName('tripType');
+    for (var i = 0; i < radios.length; i++) {
+      radios[i].onclick = toggleReturnField;
+    }
+
+    // Run once at the start to make sure the page is correct
+    toggleReturnField();
+  </script>
 
 </body>
 </html>

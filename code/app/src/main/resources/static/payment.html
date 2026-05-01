@@ -15,16 +15,19 @@
       </div>
 
       <form class="auth-form" action="/payment" method="post">
+        <!-- Hidden inputs for backend -->
         <input type="hidden" id="flight-id" name="flightId" />
+        <input type="hidden" id="return-flight-id" name="returnFlightId" />
         <input type="hidden" id="selected-seats" name="selectedSeats" />
+        <input type="hidden" id="return-seats" name="returnSeats" />
 
-        <label for="selected-seats-display">Selected seats</label>
+        <label for="selected-seats-display">Selected seats (Outbound / Return)</label>
         <input id="selected-seats-display" type="text" value="Loading..." readonly />
 
         <label for="passenger-count-display">Passengers</label>
         <input id="passenger-count-display" type="text" value="1" readonly />
 
-        <label for="seat-price-display">Flight subtotal</label>
+        <label for="seat-price-display">Flights subtotal</label>
         <input id="seat-price-display" type="text" value="Loading..." readonly />
 
         <label for="luggage">Select luggage</label>
@@ -65,11 +68,17 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const flightId = params.get("flightId");
+    const returnFlightId = params.get("returnFlightId");
     const passengerCount = Number(params.get("qty") || "1");
-    const selectedSeats = (params.get("seats") || "").split(",").filter(Boolean);
+    
+    const outboundSeats = params.get("seats") || "";
+    const returnSeats = params.get("returnSeats") || "";
 
+    // Elements
     const flightIdInput = document.getElementById("flight-id");
+    const returnFlightIdInput = document.getElementById("return-flight-id");
     const selectedSeatsInput = document.getElementById("selected-seats");
+    const returnSeatsInput = document.getElementById("return-seats");
     const selectedSeatsDisplay = document.getElementById("selected-seats-display");
     const passengerCountDisplay = document.getElementById("passenger-count-display");
     const seatPriceDisplay = document.getElementById("seat-price-display");
@@ -83,10 +92,18 @@
 
     let seatPrice = 0;
 
+    // Fill initial values
     flightIdInput.value = flightId || "";
-    selectedSeatsInput.value = selectedSeats.join(",");
-    selectedSeatsDisplay.value = selectedSeats.length ? selectedSeats.join(", ") : "No seats selected";
+    returnFlightIdInput.value = returnFlightId || "";
+    selectedSeatsInput.value = outboundSeats;
+    returnSeatsInput.value = returnSeats;
+    
     passengerCountDisplay.value = passengerCount.toString();
+    
+    // Combined seat display
+    let seatText = outboundSeats;
+    if (returnSeats) seatText += " / " + returnSeats;
+    selectedSeatsDisplay.value = seatText || "No seats selected";
 
     function getLuggagePrice(value) {
       if (value === "10kg") return 30;
@@ -106,19 +123,33 @@
       totalPriceHidden.value = total.toFixed(2);
     }
 
+    // Helper to fetch price for a single flight
+    async function getPrice(id) {
+      if (!id) return 0;
+      const response = await fetch(`/flight-price?flightId=${encodeURIComponent(id)}`);
+      const data = await response.json();
+      return Number(data.price) || 0;
+    }
+
+    // Load combined prices
+    async function initPrices() {
+      try {
+        const price1 = await getPrice(flightId);
+        const price2 = await getPrice(returnFlightId);
+        
+        // Total flight price is (Price1 + Price2) * passengers
+        seatPrice = (price1 + price2) * passengerCount;
+        
+        seatPriceDisplay.value = `$${seatPrice.toFixed(2)}`;
+        updateTotal();
+      } catch (err) {
+        seatPriceDisplay.value = "Price unavailable";
+        totalPriceDisplay.value = "Price unavailable";
+      }
+    }
+
     if (flightId) {
-      fetch(`/flight-price?flightId=${encodeURIComponent(flightId)}`)
-        .then(response => response.json())
-        .then(data => {
-          const basePrice = Number(data.price) || 0;
-          seatPrice = basePrice * passengerCount;
-          seatPriceDisplay.value = `$${seatPrice.toFixed(2)}`;
-          updateTotal();
-        })
-        .catch(() => {
-          seatPriceDisplay.value = "Price unavailable";
-          totalPriceDisplay.value = "Price unavailable";
-        });
+      initPrices();
     } else {
       seatPriceDisplay.value = "No flight selected";
       totalPriceDisplay.value = "No flight selected";
