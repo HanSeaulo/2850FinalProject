@@ -12,6 +12,18 @@ object ReportsTable : Table("Reports") {
 
     override val primaryKey = PrimaryKey(id)
 }
+object SeatsTable : Table("Seats") {
+    val id = integer("id").autoIncrement()
+    val flightId = integer("flight_id").references(FlightsTable.id)
+    val seatNumber = varchar("seat_number", 10)
+    val isBooked = bool("is_booked").default(false)
+
+    override val primaryKey = PrimaryKey(id)
+
+    init {
+        uniqueIndex(flightId, seatNumber)
+    }
+}
 
 object UsersTable : Table("Users") {
     val id = integer("id").autoIncrement()
