@@ -5,6 +5,7 @@ import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import tables.*
 import java.io.File
+import tables.SeatsTable
 
 object DBFactory {
     fun init() {
@@ -23,7 +24,8 @@ object DBFactory {
                 FlightsTable,
                 BookingsTable,
                 PassengersTable,
-                RequestsTable
+                RequestsTable,
+                SeatsTable
             )
         }
     }

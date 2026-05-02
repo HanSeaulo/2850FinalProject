@@ -1,5 +1,6 @@
 package org.flightbooking
 
+import access.SeatAccess
 import access.FlightAccess
 import access.UserAccess
 import database.DBFactory
@@ -108,6 +109,24 @@ fun main() {
                     call.respondRedirect("/home.html")
                 } else {
                     call.respondText("Wrong email or password")
+                }
+            }
+            post("/book-seat") {
+                val params = call.receiveParameters()
+                val flightId = params["flightId"]?.toIntOrNull()
+                val seatNumber = params["seatNumber"] ?: ""
+
+                if (flightId == null || seatNumber.isBlank()) {
+                    call.respondText("Missing seat info", status = HttpStatusCode.BadRequest)
+                    return@post
+                }
+
+                val success = SeatAccess().bookSeat(flightId, seatNumber)
+
+                if (success) {
+                    call.respondText("OK")
+                } else {
+                    call.respondText("Seat already booked", status = HttpStatusCode.Conflict)
                 }
             }
 
@@ -257,6 +276,21 @@ fun main() {
             get("/logout") {
                 call.sessions.clear<UserSession>()
                 call.respondRedirect("/home.html")
+            }
+            get("/booked-seats") {
+                val flightId = call.request.queryParameters["flightId"]?.toIntOrNull()
+
+                if (flightId == null) {
+                    call.respondText("[]", ContentType.Application.Json)
+                    return@get
+                }
+
+                val seats = SeatAccess().getBookedSeats(flightId)
+                val json = seats.joinToString(prefix = "[", postfix = "]") { seat ->
+                    "\"$seat\""
+                }
+
+                call.respondText(json, ContentType.Application.Json)
             }
 
             get("/api/flights") {

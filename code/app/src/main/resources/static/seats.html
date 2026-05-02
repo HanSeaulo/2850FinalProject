@@ -25,7 +25,7 @@
         <h1 class="page-title" id="pageTitle">Choose Your Seats</h1>
         <p class="page-subtitle" id="pageSubtitle">Pick the exact seats you want before payment.</p>
       </div>
-      <a class="button-outline" id="backToFlights" href="/flights.html">Back to flights</a>
+      <a class="button-outline" id="backToFlights" href="/flights">Back to flights</a>
     </div>
 
     <section class="plane-card">
@@ -44,16 +44,19 @@
           <span class="aisle-label">aisle</span>
           <span>D</span><span>E</span><span>F</span>
         </div>
+
         <div id="seatMap" class="seat-cabin"></div>
       </div>
 
       <aside class="seat-summary-card">
         <h2 id="summaryTitle">Trip summary</h2>
         <p id="seatSummaryText">Loading seat map...</p>
+
         <div class="summary-chip-row">
           <span class="summary-chip">Flight <strong id="flightCodeChip">—</strong></span>
           <span class="summary-chip">Passengers <strong id="passengerChip">1</strong></span>
         </div>
+
         <button class="btn-find" id="continueBtn" type="button">Continue to Payment</button>
       </aside>
     </section>
@@ -61,61 +64,86 @@
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const qty = Number(params.get('qty') || '1');
-    const returnFlightId = params.get('returnFlightId');
-    const outboundSeats = params.get('seats'); // Check if outbound is already done
-    
-    // Determine if we are currently picking the outbound or the return
+
+    const qty = Number(params.get("qty") || "1");
+    const returnFlightId = params.get("returnFlightId");
+    const outboundSeats = params.get("seats");
+
     const isPickingReturn = !!(returnFlightId && outboundSeats);
-    const currentFlightId = isPickingReturn ? returnFlightId : (params.get('flightId') || '');
+    const currentFlightId = isPickingReturn ? returnFlightId : (params.get("flightId") || "");
 
-    // UI Updates for context
-    if (isPickingReturn) {
-      document.getElementById('pageTitle').textContent = "Choose Return Seats";
-      document.getElementById('summaryTitle').textContent = "Return Trip Summary";
-      document.getElementById('continueBtn').textContent = "Continue to Payment";
-    } else if (returnFlightId) {
-      document.getElementById('pageTitle').textContent = "Choose Outbound Seats";
-      document.getElementById('continueBtn').textContent = "Next Flight Seats";
-    }
+    const selected = new Set();
+    let unavailable = new Set();
 
-    const selected = new Set(); 
-    const seatMap = document.getElementById('seatMap');
-    const seatSummaryText = document.getElementById('seatSummaryText');
-    const continueBtn = document.getElementById('continueBtn');
-    const backToFlights = document.getElementById('backToFlights');
-
-    document.getElementById('passengerChip').textContent = String(qty);
-    document.getElementById('flightCodeChip').textContent = currentFlightId || '—';
-    backToFlights.href = '/flights.html?' + params.toString();
+    const seatMap = document.getElementById("seatMap");
+    const seatSummaryText = document.getElementById("seatSummaryText");
+    const continueBtn = document.getElementById("continueBtn");
+    const backToFlights = document.getElementById("backToFlights");
 
     const rows = 12;
-    const leftSide = ['A', 'B', 'C'];
-    const rightSide = ['D', 'E', 'F'];
-    // Mock unavailable seats - in a real app, these would change per flightId
-    const unavailable = new Set(['1A', '1F', '2C', '2D', '3B', '4E', '5A', '5F', '7C', '8D', '9B', '10E']);
+    const leftSide = ["A", "B", "C"];
+    const rightSide = ["D", "E", "F"];
+
+    document.getElementById("passengerChip").textContent = String(qty);
+    document.getElementById("flightCodeChip").textContent = currentFlightId || "—";
+    backToFlights.href = "/flights?" + params.toString();
+
+    if (isPickingReturn) {
+      document.getElementById("pageTitle").textContent = "Choose Return Seats";
+      document.getElementById("summaryTitle").textContent = "Return Trip Summary";
+      continueBtn.textContent = "Continue to Payment";
+    } else if (returnFlightId) {
+      document.getElementById("pageTitle").textContent = "Choose Outbound Seats";
+      continueBtn.textContent = "Next Flight Seats";
+    }
+
+    async function loadBookedSeats() {
+      if (!currentFlightId) return;
+
+      try {
+        const response = await fetch("/booked-seats?flightId=" + encodeURIComponent(currentFlightId));
+
+        if (!response.ok) {
+          unavailable = new Set();
+          return;
+        }
+
+        const seats = await response.json();
+        unavailable = new Set(seats);
+      } catch (error) {
+        console.error("Could not load booked seats:", error);
+        unavailable = new Set();
+      }
+    }
 
     function makeSeat(row, letter) {
       const seatId = `${row}${letter}`;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'plane-seat';
+      const button = document.createElement("button");
+
+      button.type = "button";
+      button.className = "plane-seat";
       button.innerHTML = `<span class="seat-letter">${letter}</span><span class="seat-number">${row}</span>`;
       button.dataset.seat = seatId;
 
       if (unavailable.has(seatId)) {
-        button.classList.add('taken');
+        button.classList.add("taken");
         button.disabled = true;
       }
 
-      button.addEventListener('click', () => {
-        if (!button.classList.contains('selected') && selected.size >= qty) {
-          alert(`Please select only ${qty} seat${qty === 1 ? '' : 's'}.`);
+      button.addEventListener("click", () => {
+        if (!button.classList.contains("selected") && selected.size >= qty) {
+          alert(`Please select only ${qty} seat${qty === 1 ? "" : "s"}.`);
           return;
         }
-        button.classList.toggle('selected');
-        if (button.classList.contains('selected')) selected.add(seatId);
-        else selected.delete(seatId);
+
+        button.classList.toggle("selected");
+
+        if (button.classList.contains("selected")) {
+          selected.add(seatId);
+        } else {
+          selected.delete(seatId);
+        }
+
         updateSummary();
       });
 
@@ -123,49 +151,100 @@
     }
 
     function drawCabin() {
-      seatMap.innerHTML = '';
+      seatMap.innerHTML = "";
+
       for (let row = 1; row <= rows; row++) {
-        const rowEl = document.createElement('div');
-        rowEl.className = 'seat-row-aircraft';
-        const number = document.createElement('div');
-        number.className = 'row-number';
+        const rowEl = document.createElement("div");
+        rowEl.className = "seat-row-aircraft";
+
+        const number = document.createElement("div");
+        number.className = "row-number";
         number.textContent = row;
         rowEl.appendChild(number);
+
         leftSide.forEach(letter => rowEl.appendChild(makeSeat(row, letter)));
-        const aisle = document.createElement('div');
-        aisle.className = 'aisle-gap';
+
+        const aisle = document.createElement("div");
+        aisle.className = "aisle-gap";
         rowEl.appendChild(aisle);
+
         rightSide.forEach(letter => rowEl.appendChild(makeSeat(row, letter)));
+
         seatMap.appendChild(rowEl);
       }
     }
 
     function updateSummary() {
       const seats = Array.from(selected).sort();
-      seatSummaryText.innerHTML = `Choose <strong>${qty}</strong> seat(s). Selected: <strong>${seats.length ? seats.join(', ') : 'none yet'}</strong>.`;
+
+      seatSummaryText.innerHTML =
+        `Choose <strong>${qty}</strong> seat(s). Selected: <strong>${seats.length ? seats.join(", ") : "none yet"}</strong>.`;
+
       continueBtn.disabled = seats.length !== qty;
     }
 
-    continueBtn.addEventListener('click', () => {
-      const seatsString = Array.from(selected).sort().join(',');
-      
-      if (returnFlightId && !isPickingReturn) {
-        // If we just finished outbound and there's a return, reload for the return flight
-        params.set('seats', seatsString);
-        window.location.href = 'seats.html?' + params.toString();
-      } else {
-        // If one-way or we just finished the return leg, go to payment
-        if (isPickingReturn) {
-          params.set('returnSeats', seatsString);
-        } else {
-          params.set('seats', seatsString);
+    async function saveSelectedSeats() {
+      const selectedSeats = Array.from(selected).sort();
+
+      for (const seat of selectedSeats) {
+        const response = await fetch("/book-seat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body:
+            "flightId=" + encodeURIComponent(currentFlightId) +
+            "&seatNumber=" + encodeURIComponent(seat)
+        });
+
+        if (!response.ok) {
+          alert("Seat " + seat + " is already booked. Please choose another seat.");
+          return false;
         }
-        window.location.href = '/payment.html?' + params.toString();
+      }
+
+      return true;
+    }
+
+    continueBtn.addEventListener("click", async () => {
+      const seatsString = Array.from(selected).sort().join(",");
+
+      if (selected.size !== qty) {
+        alert(`Please select ${qty} seat${qty === 1 ? "" : "s"}.`);
+        return;
+      }
+
+      const saved = await saveSelectedSeats();
+
+      if (!saved) {
+        selected.clear();
+        await loadBookedSeats();
+        drawCabin();
+        updateSummary();
+        return;
+      }
+
+      if (returnFlightId && !isPickingReturn) {
+        params.set("seats", seatsString);
+        window.location.href = "/seats.html?" + params.toString();
+      } else {
+        if (isPickingReturn) {
+          params.set("returnSeats", seatsString);
+        } else {
+          params.set("seats", seatsString);
+        }
+
+        window.location.href = "/payment.html?" + params.toString();
       }
     });
 
-    drawCabin();
-    updateSummary();
+    async function init() {
+      await loadBookedSeats();
+      drawCabin();
+      updateSummary();
+    }
+
+    init();
   </script>
 </body>
 </html>
