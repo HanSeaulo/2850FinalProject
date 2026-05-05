@@ -1,4 +1,5 @@
 <!doctype html>
+
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -17,6 +18,10 @@
       <nav>
         <a href="/">Home</a>
         <a href="/booking.html">View Bookings</a>
+        <span id="user-name" style="display:none;"></span>
+        <form id="logout-form" action="/logout" method="post" style="display:none;">
+          <button type="submit">Log Out</button>
+        </form>
         <a href="/login" id="signin-link">Sign In</a>
         <a href="/management.html">Management</a>
       </nav>
@@ -36,12 +41,15 @@
         </div>
       </div>
 
-      <a href="/search" class="big-button">MAKE A BOOKING</a>
-    </div>
+
+  <a href="/search" class="big-button">MAKE A BOOKING</a>
+</div>
+
+
   </main>
 
   <script>
-    // ✅ FIXED background animation
+    // Background animation
     const images = ["/bg/bg1.jpeg", "/bg/bg2.jpeg", "/bg/bg3.jpeg"];
 
     let index = 0;
@@ -66,17 +74,28 @@
 
       showingA = !showingA;
     }, 6000);
-
-    fetch("/current-user")
-      .then(res => res.text())
-      .then(name => {
-        if (name && name.trim() !== "") {
-          const link = document.getElementById("signin-link");
-          link.textContent = name;
-          link.href = "/logout";
-        }
-      });
   </script>
 
+  <script>
+  fetch("/current-user")
+    .then(res => res.text())
+    .then(name => {
+      const signinLink = document.getElementById("signin-link");
+      const logoutForm = document.getElementById("logout-form");
+      const userName = document.getElementById("user-name");
+
+      if (name.trim() !== "") {
+        signinLink.style.display = "none";
+        userName.style.display = "inline";
+        userName.textContent = name;
+        logoutForm.style.display = "inline";
+      } else {
+        signinLink.style.display = "inline";
+        userName.style.display = "none";
+        logoutForm.style.display = "none";
+      }
+    });
+</script>
+<script src="/auth.js"></script>
 </body>
 </html>
