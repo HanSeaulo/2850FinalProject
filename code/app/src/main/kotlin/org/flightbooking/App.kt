@@ -273,7 +273,7 @@ fun main() {
                 call.respondText(session?.name ?: "")
             }
 
-            get("/logout") {
+            post("/logout") {
                 call.sessions.clear<UserSession>()
                 call.respondRedirect("/home.html")
             }

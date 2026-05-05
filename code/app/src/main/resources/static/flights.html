@@ -7,17 +7,19 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <nav class="navbar">
-    <div class="nav-container">
-      <div class="logo">✈ Go Fly</div>
-      <div>
-        <a href="/home.html">Home</a>
-        <a href="/booking.html">View Bookings</a>
-        <a href="/login.html">Sign In</a>
-        <a href="/management.html">Management</a>
-      </div>
-    </div>
-  </nav>
+  <nav>
+      <a href="/">Home</a>
+      <a href="/booking.html">View Bookings</a>
+
+      <span id="user-name" style="display:none;"></span>
+
+      <form id="logout-form" action="/logout" method="post" style="display:none;">
+        <button type="submit">Log Out</button>
+      </form>
+
+      <a href="/login" id="signin-link">Sign In</a>
+      <a href="/management.html">Management</a>
+    </nav>
 
   <div class="container page">
     <h1 class="page-title">Available Flights</h1>
@@ -186,5 +188,26 @@
     }
     init();
   </script>
+  <script>
+async function updateAuthButton() {
+  const authButton = document.querySelector(".nav a[href='/login.html'], .nav a[href='/login']");
+
+  if (!authButton) return;
+
+  const res = await fetch("/current-user");
+  const name = await res.text();
+
+  if (name.trim()) {
+    authButton.textContent = name;
+    authButton.href = "/logout";
+  } else {
+    authButton.textContent = "Sign In";
+    authButton.href = "/login.html";
+  }
+}
+
+updateAuthButton();
+</script>
+<script src="/auth.js"></script>
 </body>
 </html>
