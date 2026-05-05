@@ -18,7 +18,7 @@
         <span id="user-name" style="display:none;"></span>
 
         <form id="logout-form" action="/logout" method="post" style="display:none;">
-          button type="submit">Log Out</button>
+          <button type="submit">Log Out</button>
         </form>
 
         <a href="/login" id="signin-link">Sign In</a>
