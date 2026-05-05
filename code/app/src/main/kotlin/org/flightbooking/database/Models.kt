@@ -1,6 +1,7 @@
 package models
 
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
 
 data class Reports(
     val id: Int = 0,
@@ -17,6 +18,7 @@ data class Users(
     val createdAt: LocalDateTime
 )
 
+@Serializable
 data class Flights(
     val id: Int = 0,
     val flightNumber: String,

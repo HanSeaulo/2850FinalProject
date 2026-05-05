@@ -1,4 +1,5 @@
 plugins {
+    kotlin("plugin.serialization") version "2.0.0"
     alias(libs.plugins.kotlin.jvm)
     application
 }
@@ -23,6 +24,8 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation("io.ktor:ktor-server-pebble-jvm:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-sessions-jvm:${libs.versions.ktor.get()}")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)

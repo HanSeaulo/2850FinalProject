@@ -21,6 +21,8 @@ import io.ktor.server.sessions.*
 import io.pebbletemplates.pebble.loader.ClasspathLoader
 import java.io.File
 import java.sql.DriverManager
+import kotlinx.datetime.LocalDateTime
+import io.ktor.server.pebble.PebbleContent
 
 fun dbUrl(): String {
     val dbFile = File("src/main/kotlin/org/flightbooking/database/resources/Database.db")
@@ -294,64 +296,22 @@ fun main() {
             }
 
             get("/api/flights") {
-                try {
-                    val from = sqlText(call.request.queryParameters["from"])
-                    val to = sqlText(call.request.queryParameters["to"])
-                    val qty = call.request.queryParameters["qty"]?.toIntOrNull() ?: 1
-                    val depart = sqlText(call.request.queryParameters["depart"])
+                val from = call.request.queryParameters["from"] ?: ""
+                val to = call.request.queryParameters["to"] ?: ""
+                val depart = call.request.queryParameters["date"] ?: ""
+                val qty = call.request.queryParameters["qty"]?.toIntOrNull() ?: 1
+                val cabinRaw = call.request.queryParameters["class"] ?: "econ"
 
-                    val rows = mutableListOf<String>()
+                val cabinClass = if (cabinRaw == "bus") "Business" else "Economy"
 
-                    DriverManager.getConnection(dbUrl()).use { conn ->
-                        val sql = """
-                            SELECT id, flight_number, departure_airport, arrival_airport,
-                                   departure_time, arrival_time, price, available_seats
-                            FROM Flights
-                            WHERE (? IS NULL OR departure_airport = ?)
-                              AND (? IS NULL OR arrival_airport = ?)
-                              AND available_seats >= ?
-                              AND (? IS NULL OR substr(departure_time, 1, 10) >= ?)
-                            ORDER BY departure_time
-                        """.trimIndent()
-
-                        conn.prepareStatement(sql).use { stmt ->
-                            stmt.setString(1, from)
-                            stmt.setString(2, from)
-                            stmt.setString(3, to)
-                            stmt.setString(4, to)
-                            stmt.setInt(5, qty)
-                            stmt.setString(6, depart)
-                            stmt.setString(7, depart)
-
-                            stmt.executeQuery().use { rs ->
-                                while (rs.next()) {
-                                    rows.add(
-                                        """
-                                        {
-                                          "id": ${rs.getInt("id")},
-                                          "flightNumber": "${esc(rs.getString("flight_number"))}",
-                                          "from": "${esc(rs.getString("departure_airport"))}",
-                                          "to": "${esc(rs.getString("arrival_airport"))}",
-                                          "departureTime": "${esc(rs.getString("departure_time"))}",
-                                          "arrivalTime": "${esc(rs.getString("arrival_time"))}",
-                                          "price": ${rs.getDouble("price")},
-                                          "availableSeats": ${rs.getInt("available_seats")}
-                                        }
-                                        """.trimIndent()
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    call.respondText("[${rows.joinToString(",")}]", ContentType.Application.Json)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    call.respondText(
-                        "Flights route error: ${e.message}",
-                        status = HttpStatusCode.InternalServerError
-                    )
+                if (from.isBlank() || to.isBlank() || depart.isBlank()) {
+                    call.respondText("Missing search parameters", status = HttpStatusCode.BadRequest)
+                    return@get
                 }
+                val departTime = LocalDateTime.parse("${depart}T00:00:00")
+                val flights = FlightAccess().searchFlights(from, to, departTime, qty, cabinClass) ?: emptyList()
+
+                call.respond(flights)
             }
 
             get("/flight-price") {
