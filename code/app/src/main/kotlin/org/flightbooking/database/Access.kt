@@ -111,6 +111,13 @@ class FlightAccess {
             .map { constructFlight(it) }
     }
 
+    fun getFlightPrice(flightId: Int): Pair<Int, Double>? = transaction {
+        FlightsTable.select(FlightsTable.id, FlightsTable.price)
+            .where { FlightsTable.id eq flightId }
+            .map { Pair(it[FlightsTable.id], it[FlightsTable.price].toDouble()) }
+            .singleOrNull()
+}
+
     private fun constructFlight(row: ResultRow): Flights {
         return Flights(
             id = row[FlightsTable.id],
