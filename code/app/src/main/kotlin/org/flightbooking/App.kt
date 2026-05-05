@@ -3,6 +3,7 @@ package org.flightbooking
 import access.SeatAccess
 import access.FlightAccess
 import access.UserAccess
+import access.BookingAccess
 import database.DBFactory
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -24,6 +25,8 @@ import java.sql.DriverManager
 import kotlinx.datetime.LocalDateTime
 import io.ktor.server.pebble.PebbleContent
 
+
+
 fun dbUrl(): String {
     val dbFile = File("src/main/kotlin/org/flightbooking/database/resources/Database.db")
     return "jdbc:sqlite:${dbFile.absolutePath}"
@@ -38,6 +41,7 @@ fun esc(value: String?): String =
         .replace("\n", "\\n")
         .replace("\r", "\\r")
 
+
 fun main() {
     embeddedServer(Netty, port = 8080) {
         DBFactory.init()
@@ -49,9 +53,12 @@ fun main() {
         data class UserSession(val name: String, val email: String)
 
         install(Sessions) {
-            cookie<UserSession>("user_session")
+            cookie<UserSession>("user_session") {
+                cookie.maxAgeInSeconds = 60 * 60 * 24 // 24 hours
+                cookie.path = "/"
+            }
         }
-
+        
         install(Pebble) {
             loader(ClasspathLoader().apply { prefix = "templates" })
         }
@@ -113,6 +120,7 @@ fun main() {
                     call.respondText("Wrong email or password")
                 }
             }
+
             post("/book-seat") {
                 val params = call.receiveParameters()
                 val flightId = params["flightId"]?.toIntOrNull()
@@ -131,6 +139,33 @@ fun main() {
                     call.respondText("Seat already booked", status = HttpStatusCode.Conflict)
                 }
             }
+
+            // post("/payment") {
+            //     val session = call.sessions.get<UserSession>()
+            //         ?: run { call.respondRedirect("/login.html"); return@post }
+
+            //     val params = call.receiveParameters()
+            //     val totalPrice = params["totalPrice"]?.toDoubleOrNull() ?: 0.0
+            //     val selectedSeats = (params["selectedSeats"] ?: "")
+            //         .split(",").map { it.trim() }.filter { it.isNotBlank() }
+            //     val flightId = params["flightId"]?.toIntOrNull()
+            //         ?: run { call.respondText("Missing flight or seats", status = HttpStatusCode.BadRequest); return@post }
+
+            //     if (selectedSeats.isEmpty()) {
+            //         call.respondText("Missing flight or seats", status = HttpStatusCode.BadRequest)
+            //         return@post
+            //     }
+
+            //     val result = BookingAccess().createBooking(session, flightId, selectedSeats, totalPrice)
+
+            //     when (result) {
+            //         "USER_NOT_FOUND"    -> call.respondText("User not found", status = HttpStatusCode.Unauthorized)
+            //         "FLIGHT_NOT_FOUND"  -> call.respondText("Flight not found", status = HttpStatusCode.NotFound)
+            //         "NOT_ENOUGH_SEATS"  -> call.respondText("Not enough seats remaining", status = HttpStatusCode.BadRequest)
+            //         "BOOKING_FAILED"    -> call.respondText("Could not create booking", status = HttpStatusCode.InternalServerError)
+            //         else                -> call.respondRedirect("/confirmation.html?bookingId=$result")
+            //     }
+            // }
 
             post("/payment") {
                 val session = call.sessions.get<UserSession>()
@@ -315,36 +350,24 @@ fun main() {
             }
 
             get("/flight-price") {
-                try {
-                    val flightId = call.request.queryParameters["flightId"]?.toIntOrNull()
-                    if (flightId == null) {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing flightId"))
+                val flightId = call.request.queryParameters["flightId"]?.toIntOrNull()
+                    ?: run {
+                        call.respondText("""{"error":"Missing flightId"}""", ContentType.Application.Json, HttpStatusCode.BadRequest)
                         return@get
                     }
 
-                    DriverManager.getConnection(dbUrl()).use { conn ->
-                        conn.prepareStatement("SELECT id, price FROM Flights WHERE id = ?").use { stmt ->
-                            stmt.setInt(1, flightId)
-                            stmt.executeQuery().use { rs ->
-                                if (rs.next()) {
-                                    call.respondText(
-                                        """{"flightId":${rs.getInt("id")},"price":${rs.getDouble("price")}}""",
-                                        ContentType.Application.Json
-                                    )
-                                } else {
-                                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "Flight not found"))
-                                }
-                            }
-                        }
+                val result = FlightAccess().getFlightPrice(flightId)
+                    ?: run {
+                        call.respondText("""{"error":"Flight not found"}""", ContentType.Application.Json, HttpStatusCode.NotFound)
+                        return@get
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    call.respondText(
-                        "Flight price route error: ${e.message}",
-                        status = HttpStatusCode.InternalServerError
-                    )
-                }
+
+                call.respondText(
+                    """{"flightId":${result.first},"price":${result.second}}""",
+                    ContentType.Application.Json
+                )
             }
+            
 
             get("/api/management-stats") {
                 try {
