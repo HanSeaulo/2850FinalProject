@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Passenger Details</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">✈ Go Fly</div>
+      <nav>
+        <a href="/home.html">Home</a>
+        <a href="/search">Book a flight</a>
+        <a href="/booking.html">My Bookings</a>
+        <a href="/management-login.html">Management</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Passenger Details</h1>
+      </div>
+    </div>
+
+    <section class="auth-card" style="max-width: 900px; margin: 0 auto;">
+      <form id="passengerForm" class="auth-form">
+        <div id="passengerFields"></div>
+
+        <button class="primary" type="submit">Continue to Seat Selection</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const qty = parseInt(params.get("qty") || "1", 10);
+    const passengerFields = document.getElementById("passengerFields");
+
+    function buildPassengerFields() {
+      let html = "";
+      for (let i = 1; i <= qty; i++) {
+        html += `
+          <section class="card" style="margin-bottom: 18px;">
+            <h3 style="margin-top: 0;">Passenger ${i}</h3>
+            <div class="input-row">
+              <div>
+                <label for="firstName${i}">First Name</label>
+                <input id="firstName${i}" name="firstName${i}" type="text" required />
+              </div>
+              <div>
+                <label for="lastName${i}">Last Name</label>
+                <input id="lastName${i}" name="lastName${i}" type="text" required />
+              </div>
+            </div>
+
+            <div class="input-row">
+              <div>
+                <label for="email${i}">Email</label>
+                <input id="email${i}" name="email${i}" type="email" required />
+              </div>
+              <div>
+                <label for="dob${i}">Date of Birth</label>
+                <input id="dob${i}" name="dob${i}" type="date" required />
+              </div>
+            </div>
+          </section>
+        `;
+      }
+      passengerFields.innerHTML = html;
+    }
+
+    document.getElementById("passengerForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const passengers = [];
+      for (let i = 1; i <= qty; i++) {
+        passengers.push({
+          firstName: document.getElementById(`firstName${i}`).value.trim(),
+          lastName: document.getElementById(`lastName${i}`).value.trim(),
+          email: document.getElementById(`email${i}`).value.trim(),
+          dob: document.getElementById(`dob${i}`).value
+        });
+      }
+
+      sessionStorage.setItem("passengerDetails", JSON.stringify(passengers));
+
+      const next = new URLSearchParams(window.location.search);
+      window.location.href = `/seats.html?${next.toString()}`;
+    });
+
+    buildPassengerFields();
+  </script>
+</body>
+</html>

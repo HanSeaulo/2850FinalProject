@@ -38,7 +38,7 @@
 
     <div style="text-align: center; margin-top: 40px;">
       <button id="finalConfirmBtn" class="btn-find" style="padding: 15px 50px;" onclick="goToSeats()">
-        Continue to Seat Selection
+        Continue to Passenger Details
       </button>
     </div>
   </div>
@@ -100,7 +100,7 @@
       const next = new URLSearchParams(window.location.search);
       next.set("flightId", selectedOutboundId);
       if (isRoundTrip) next.set("returnFlightId", selectedReturnId);
-      window.location.href = "/seats.html?" + next.toString();
+      window.location.href = "/passenger-details.html?" + next.toString();
     }
 
     async function fetchFlights(from, to, date, targetId, selectFunc) {
