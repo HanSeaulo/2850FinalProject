@@ -13,6 +13,7 @@ class BookingAccessTest {
     @BeforeTest
     fun setup() {
         DBFactory.init()
+        teardown()
     }
 
     @AfterTest

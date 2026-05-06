@@ -14,6 +14,7 @@ class UserAccessTest {
     fun setup() {
         // Connects to the database exactly how your app does
         DBFactory.init()
+        teardown()
     }
 
     @AfterTest
