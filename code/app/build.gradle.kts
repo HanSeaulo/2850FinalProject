@@ -39,6 +39,11 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:0.41.1")
 
     implementation("org.xerial:sqlite-jdbc:3.50.2.0")
+
+    // --- ADDED THESE 3 LINES FOR IN-MEMORY DATABASE TESTING ---
+    testImplementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    testImplementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    testImplementation("org.xerial:sqlite-jdbc:3.50.2.0")
 }
 
 java {
