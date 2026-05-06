@@ -75,6 +75,41 @@
         </table>
       </div>
     </section>
+        <section class="card management-chat-card">
+      <div class="table-header">
+        <h2 class="section-title">Support Chats</h2>
+        <span class="muted">Current and resolved conversations</span>
+      </div>
+
+      <div class="management-chat-layout">
+        <div class="chat-thread-list" id="managementThreadList"></div>
+
+        <div class="chat-thread-view">
+          <div class="chat-thread-view-header">
+            <div>
+              <h3 id="managementThreadTitle" style="margin:0;">Select a chat</h3>
+              <p class="muted" id="managementThreadMeta">Choose a conversation from the left.</p>
+            </div>
+            <span id="managementStatusPill" class="chat-status-pill unanswered">unanswered</span>
+          </div>
+
+          <div id="managementChatMessages" class="chat-messages management-chat-messages">
+            <div class="chat-empty">No chat selected.</div>
+          </div>
+
+          <div class="chat-panel-actions">
+            <button type="button" class="small-button" id="markAnsweredBtn">Mark answered</button>
+            <button type="button" class="small-button" id="markUnansweredBtn">Mark unanswered</button>
+            <button type="button" class="small-button" id="markResolvedBtn">Mark resolved</button>
+          </div>
+
+          <div class="chat-input-row">
+            <input id="managementReplyInput" type="text" placeholder="Type a reply..." />
+            <button type="button" id="managementReplyBtn">Reply</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -154,6 +189,156 @@ async function updateAuthButton() {
 }
 
 updateAuthButton();
+</script>
+<script>
+  const CHAT_STORAGE_KEY = "gofly_support_threads";
+  let activeManagementThreadId = null;
+
+  function getThreads() {
+    return JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || "[]");
+  }
+
+  function saveThreads(threads) {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(threads));
+  }
+
+  function getThreadById(id) {
+    return getThreads().find(t => t.id === id) || null;
+  }
+
+  function setManagementStatus(status) {
+    const pill = document.getElementById("managementStatusPill");
+    pill.className = "chat-status-pill " + status;
+    pill.textContent = status;
+  }
+
+  function renderManagementThreadList() {
+    const list = document.getElementById("managementThreadList");
+    const threads = getThreads();
+    const current = threads.filter(t => !t.resolved);
+    const resolved = threads.filter(t => t.resolved);
+
+    function threadButton(thread) {
+      const activeClass = thread.id === activeManagementThreadId ? "active" : "";
+      const preview = (thread.messages[thread.messages.length - 1]?.text || "No messages yet").replace(/</g, "&lt;");
+      const status = thread.resolved ? "resolved" : (thread.answered ? "answered" : "unanswered");
+
+      return `
+        <button class="chat-thread-item ${activeClass}" type="button" onclick="openManagementThread('${thread.id}')">
+          <div class="chat-thread-item-top">
+            <strong>${thread.title || "Support request"}</strong>
+            <span class="chat-status-pill ${status}">${status}</span>
+          </div>
+          <p>${preview}</p>
+        </button>
+      `;
+    }
+
+    list.innerHTML = `
+      <div class="chat-thread-group">
+        <h3>Current chats</h3>
+        ${current.length ? current.map(threadButton).join("") : '<div class="chat-empty">No current chats.</div>'}
+      </div>
+      <div class="chat-thread-group">
+        <h3>Resolved chats</h3>
+        ${resolved.length ? resolved.map(threadButton).join("") : '<div class="chat-empty">No resolved chats.</div>'}
+      </div>
+    `;
+
+    if (!activeManagementThreadId && threads.length) {
+      openManagementThread(threads[0].id);
+    }
+  }
+
+  function openManagementThread(id) {
+    activeManagementThreadId = id;
+    const thread = getThreadById(id);
+    renderManagementThreadList();
+
+    if (!thread) {
+      document.getElementById("managementThreadTitle").textContent = "Select a chat";
+      document.getElementById("managementThreadMeta").textContent = "Choose a conversation from the left.";
+      document.getElementById("managementChatMessages").innerHTML = '<div class="chat-empty">No chat selected.</div>';
+      setManagementStatus("unanswered");
+      return;
+    }
+
+    document.getElementById("managementThreadTitle").textContent = thread.title || "Support request";
+    document.getElementById("managementThreadMeta").textContent =
+      `Created ${new Date(thread.createdAt).toLocaleString()} · ${thread.id}`;
+    setManagementStatus(thread.resolved ? "resolved" : (thread.answered ? "answered" : "unanswered"));
+
+    const container = document.getElementById("managementChatMessages");
+    if (!thread.messages.length) {
+      container.innerHTML = '<div class="chat-empty">No messages in this chat.</div>';
+      return;
+    }
+
+    container.innerHTML = thread.messages.map(message => `
+      <div class="chat-bubble ${message.sender}">
+        <span>${message.sender === "management" ? "Management" : "User"}</span>
+        <p>${message.text}</p>
+      </div>
+    `).join("");
+
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function updateThreadStatus(status) {
+    if (!activeManagementThreadId) return;
+    const threads = getThreads();
+    const thread = threads.find(t => t.id === activeManagementThreadId);
+    if (!thread) return;
+
+    if (status === "resolved") {
+      thread.resolved = true;
+      thread.answered = true;
+    } else if (status === "answered") {
+      thread.answered = true;
+      thread.resolved = false;
+    } else if (status === "unanswered") {
+      thread.answered = false;
+      thread.resolved = false;
+    }
+
+    saveThreads(threads);
+    openManagementThread(activeManagementThreadId);
+  }
+
+  function sendManagementReply() {
+    if (!activeManagementThreadId) return;
+
+    const input = document.getElementById("managementReplyInput");
+    const text = input.value.trim();
+    if (!text) return;
+
+    const threads = getThreads();
+    const thread = threads.find(t => t.id === activeManagementThreadId);
+    if (!thread) return;
+
+    thread.messages.push({
+      sender: "management",
+      text,
+      time: new Date().toISOString()
+    });
+    thread.answered = true;
+    thread.resolved = false;
+
+    saveThreads(threads);
+    input.value = "";
+    openManagementThread(activeManagementThreadId);
+  }
+
+  document.getElementById("markAnsweredBtn").addEventListener("click", () => updateThreadStatus("answered"));
+  document.getElementById("markUnansweredBtn").addEventListener("click", () => updateThreadStatus("unanswered"));
+  document.getElementById("markResolvedBtn").addEventListener("click", () => updateThreadStatus("resolved"));
+  document.getElementById("managementReplyBtn").addEventListener("click", sendManagementReply);
+
+  document.getElementById("managementReplyInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendManagementReply();
+  });
+
+  renderManagementThreadList();
 </script>
 <script src="/auth.js"></script>
 </body>

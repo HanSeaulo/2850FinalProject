@@ -43,10 +43,39 @@
 
 
   <a href="/search" class="big-button">MAKE A BOOKING</a>
-</div>
-
-
+    </div>
   </main>
+
+    <div class="chat-widget">
+    <button id="chatToggle" class="chat-toggle" type="button">Chat with us</button>
+
+    <div id="chatPanel" class="chat-panel hidden">
+      <div class="chat-panel-header">
+        <div>
+          <h3>Support Chat</h3>
+        </div>
+        <button class="chat-close" type="button" id="chatClose">×</button>
+      </div>
+
+      <div class="chat-thread-meta">
+        <span class="chat-thread-id" id="homeThreadLabel">No active chat</span>
+        <span id="homeStatusPill" class="chat-status-pill unanswered">unanswered</span>
+      </div>
+
+      <div id="homeChatMessages" class="chat-messages">
+        <div class="chat-empty">No current chat. Send a message to start one.</div>
+      </div>
+
+      <div class="chat-input-row">
+        <input id="homeChatInput" type="text" placeholder="Type your message..." />
+        <button id="homeSendBtn" type="button">Send</button>
+      </div>
+
+      <div class="chat-panel-actions">
+        <button id="homeResolveBtn" class="small-button" type="button">Mark as resolved</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     // Background animation
@@ -95,6 +124,142 @@
         logoutForm.style.display = "none";
       }
     });
+</script>
+<script>
+  const CHAT_STORAGE_KEY = "gofly_support_threads";
+
+  function getThreads() {
+    return JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || "[]");
+  }
+
+  function saveThreads(threads) {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(threads));
+  }
+
+  function getCurrentThread() {
+    return getThreads().find(t => !t.resolved) || null;
+  }
+
+  function updateHomeStatusPill(status) {
+    const pill = document.getElementById("homeStatusPill");
+    pill.className = "chat-status-pill " + status;
+    pill.textContent = status;
+  }
+
+  function renderHomeMessages() {
+    const box = document.getElementById("homeChatMessages");
+    const label = document.getElementById("homeThreadLabel");
+    const thread = getCurrentThread();
+
+    if (!thread) {
+      label.textContent = "No active chat";
+      updateHomeStatusPill("unanswered");
+      box.innerHTML = `<div class="chat-empty">No current chat. Send a message to start one.</div>`;
+      return;
+    }
+
+    label.textContent = thread.title || ("Chat " + thread.id.slice(-6));
+    updateHomeStatusPill(thread.resolved ? "resolved" : (thread.answered ? "answered" : "unanswered"));
+
+    if (!thread.messages.length) {
+      box.innerHTML = `<div class="chat-empty">No messages yet.</div>`;
+      return;
+    }
+
+    box.innerHTML = thread.messages.map(message => `
+      <div class="chat-bubble ${message.sender}">
+        <span>${message.sender === "management" ? "Management" : "You"}</span>
+        <p>${message.text}</p>
+      </div>
+    `).join("");
+
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function ensureThread() {
+    const threads = getThreads();
+    let thread = threads.find(t => !t.resolved);
+
+    if (!thread) {
+      thread = {
+        id: "thread_" + Date.now(),
+        title: "Support request",
+        answered: false,
+        resolved: false,
+        createdAt: new Date().toISOString(),
+        messages: []
+      };
+      threads.unshift(thread);
+      saveThreads(threads);
+    }
+
+    return thread;
+  }
+
+  function sendHomeMessage() {
+    const input = document.getElementById("homeChatInput");
+    const text = input.value.trim();
+    if (!text) return;
+
+    const threads = getThreads();
+    let thread = threads.find(t => !t.resolved);
+
+    if (!thread) {
+      thread = {
+        id: "thread_" + Date.now(),
+        title: text.slice(0, 32) || "Support request",
+        answered: false,
+        resolved: false,
+        createdAt: new Date().toISOString(),
+        messages: []
+      };
+      threads.unshift(thread);
+    }
+
+    thread.messages.push({
+      sender: "user",
+      text,
+      time: new Date().toISOString()
+    });
+    thread.answered = false;
+    thread.resolved = false;
+    if (!thread.title || thread.title === "Support request") {
+      thread.title = text.slice(0, 32) || "Support request";
+    }
+
+    saveThreads(threads);
+    input.value = "";
+    renderHomeMessages();
+  }
+
+  function resolveHomeThread() {
+    const threads = getThreads();
+    const thread = threads.find(t => !t.resolved);
+    if (!thread) return;
+
+    thread.resolved = true;
+    saveThreads(threads);
+    renderHomeMessages();
+    document.getElementById("chatPanel").classList.add("hidden");
+  }
+
+  document.getElementById("chatToggle").addEventListener("click", () => {
+    document.getElementById("chatPanel").classList.toggle("hidden");
+    renderHomeMessages();
+  });
+
+  document.getElementById("chatClose").addEventListener("click", () => {
+    document.getElementById("chatPanel").classList.add("hidden");
+  });
+
+  document.getElementById("homeSendBtn").addEventListener("click", sendHomeMessage);
+  document.getElementById("homeResolveBtn").addEventListener("click", resolveHomeThread);
+
+  document.getElementById("homeChatInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendHomeMessage();
+  });
+
+  renderHomeMessages();
 </script>
 <script src="/auth.js"></script>
 </body>
