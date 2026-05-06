@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Management Login</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="auth-shell">
+
+  <main class="auth-page">
+    <section class="auth-card management-login-card">
+      <div class="brand">
+        <h1>Management Access</h1>
+        <p>Enter the management password to continue.</p>
+      </div>
+
+      <form id="managementLoginForm" class="auth-form">
+        <label for="managementPassword">Password</label>
+        <input
+          id="managementPassword"
+          name="managementPassword"
+          type="password"
+          placeholder="Enter management password"
+          required
+        />
+
+        <button class="primary" type="submit">Enter Management</button>
+      </form>
+
+      <p id="managementLoginError" class="management-login-error hidden">
+        Incorrect password.
+      </p>
+
+      <p class="footer-text">
+        <a class="link" href="/home.html">Back to home</a>
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const MANAGEMENT_PASSWORD = "1234";
+
+    document.getElementById("managementLoginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const password = document.getElementById("managementPassword").value;
+      const error = document.getElementById("managementLoginError");
+
+      if (password === MANAGEMENT_PASSWORD) {
+        sessionStorage.setItem("managementAuthenticated", "true");
+        window.location.href = "/management.html";
+      } else {
+        error.classList.remove("hidden");
+      }
+    });
+
+  </script>
+</body>
+</html>

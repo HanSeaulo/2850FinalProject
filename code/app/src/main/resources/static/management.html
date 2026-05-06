@@ -78,6 +78,12 @@
   </main>
 
   <script>
+  if (sessionStorage.getItem("managementAuthenticated") !== "true") {
+    window.location.href = "/management-login.html";
+  }
+</script>
+
+  <script>
     function badgeClass(status) {
       const normalized = String(status || "").toLowerCase();
       if (normalized.includes("approved") || normalized.includes("confirmed") || normalized === "ok") return "ok";
