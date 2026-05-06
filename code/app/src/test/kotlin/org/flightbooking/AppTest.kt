@@ -9,9 +9,10 @@ class AppTest {
     fun `test dbUrl generates correct sqlite connection string`() {
         val url = dbUrl()
         
-        // Ensures the URL starts with the correct JDBC SQLite prefix
+        // check that the driver prefix is right
         assertTrue(url.startsWith("jdbc:sqlite:"), "DB URL should start with jdbc:sqlite:")
-        // Ensures the URL points to your actual database file
+        
+        // make sure it actually points to our db file
         assertTrue(url.contains("Database.db"), "DB URL should contain Database.db")
     }
 }

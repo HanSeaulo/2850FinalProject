@@ -1,3 +1,4 @@
+# CI/CD pipeline to automatically run the test suite on push
 name: Automated Tests
 
 on: [push, pull_request]
@@ -19,6 +20,6 @@ jobs:
     - name: Grant Execute Permission to Gradle
       run: chmod +x code/gradlew
 
-    - name: Run the Test Suite!
+    - name: Run the Test Suite
       working-directory: ./code
       run: ./gradlew test

@@ -7,7 +7,7 @@ import java.sql.DriverManager
 
 class SeatAccessTest {
 
-    // We use a fake flight ID and fake seats so we don't accidentally mess up real flight data
+    // dummy data for testing
     private val testFlightId = -9999
     private val testSeat1 = "TEST-1A"
     private val testSeat2 = "TEST-1B"
@@ -20,11 +20,10 @@ class SeatAccessTest {
 
     @AfterTest
     fun teardown() {
-        // Clean up our fake seats the millisecond the test finishes
+        // cleanup test data
         val conn = DriverManager.getConnection(dbUrl())
         val stmt = conn.createStatement()
         
-        // Using the exact SQL names from Tables.kt
         stmt.execute("DELETE FROM Seats WHERE flight_id = $testFlightId")
         
         stmt.close()
@@ -35,11 +34,11 @@ class SeatAccessTest {
     fun `test bookSeat allows booking a new seat and prevents double booking`() {
         val seatAccess = SeatAccess()
 
-        // 1. Test successful booking
+        // test initial booking
         val firstBooking = seatAccess.bookSeat(testFlightId, testSeat1)
         assertTrue(firstBooking, "Should return true when booking an empty seat")
 
-        // 2. Test duplicate booking prevention
+        // test double booking prevention
         val doubleBooking = seatAccess.bookSeat(testFlightId, testSeat1)
         assertFalse(doubleBooking, "Should return false when trying to book an already booked seat")
     }
@@ -48,14 +47,14 @@ class SeatAccessTest {
     fun `test getBookedSeats returns the correct list of seats`() {
         val seatAccess = SeatAccess()
 
-        // Book two fake seats
+        // setup mock bookings
         seatAccess.bookSeat(testFlightId, testSeat1)
         seatAccess.bookSeat(testFlightId, testSeat2)
 
-        // Fetch the list of booked seats for our fake flight
+        // fetch results
         val bookedSeats = seatAccess.getBookedSeats(testFlightId)
 
-        // Verify the logic returns exactly what we just put in
+        // verify counts and data
         assertEquals(2, bookedSeats.size, "Should return exactly 2 booked seats")
         assertTrue(bookedSeats.contains(testSeat1), "List should contain $testSeat1")
         assertTrue(bookedSeats.contains(testSeat2), "List should contain $testSeat2")

@@ -18,7 +18,7 @@ class BookingAccessTest {
 
     @AfterTest
     fun teardown() {
-        // Clean up the temporary user we create for testing
+        // clean up test user
         val conn = DriverManager.getConnection(dbUrl())
         val stmt = conn.createStatement()
         stmt.execute("DELETE FROM Users WHERE email = '$testEmail'")
@@ -28,16 +28,16 @@ class BookingAccessTest {
 
     @Test
     fun `test createBooking returns FLIGHT_NOT_FOUND for invalid flight ID`() {
-        // 1. Create a valid user so it passes the first security check
+        // setup valid user to pass auth
         UserAccess().createUser("Booking Tester", testEmail, "pass123", "user")
         val validSession = UserSession("Booking Tester", testEmail)
         
         val bookingAccess = BookingAccess()
         
-        // 2. Try to book a flight ID that definitely doesn't exist (-999)
+        // try to book a fake flight
         val result = bookingAccess.createBooking(validSession, -999, listOf("1A", "1B"), 500.0)
         
-        // 3. Verify it caught the bad flight without crashing
+        // make sure it throws the right error
         assertEquals("FLIGHT_NOT_FOUND", result, "Should reject booking for a non-existent flight")
     }
 
@@ -46,7 +46,7 @@ class BookingAccessTest {
         val bookingAccess = BookingAccess()
         val fakeSession = UserSession("Ghost", "nobody@nowhere.com")
         
-        // Simulating a request from a session that isn't logged in properly
+        // test with invalid session
         val result = bookingAccess.createBooking(fakeSession, 1, listOf("1A"), 100.0)
         
         assertEquals("USER_NOT_FOUND", result, "Should reject booking for an invalid user session")
@@ -56,9 +56,20 @@ class BookingAccessTest {
     fun `test MyBookings returns empty list for user with no history`() {
         val bookingAccess = BookingAccess()
         
-        // Testing an empty state to ensure the inner/left joins don't break
+        // check brand new user state
         val results = bookingAccess.MyBookings("brandnewuser@leeds.ac.uk")
         
         assertTrue(results.isEmpty(), "A non-existent or brand new user should have 0 bookings")
+    }
+
+    @Test
+    fun `test createBooking handles various inputs without crashing`() {
+        UserAccess().createUser("Edge Case", "edge@leeds.ac.uk", "pass123", "user")
+        val session = UserSession("Edge Case", "edge@leeds.ac.uk")
+        val bookingAccess = BookingAccess()
+
+        // We just care that the app doesn't crash when given weird data
+        val result = bookingAccess.createBooking(session, 1, listOf("1A"), -50.0)
+        assertNotNull(result, "The app should handle the request and return a status string")
     }
 }

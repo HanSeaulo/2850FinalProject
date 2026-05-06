@@ -15,6 +15,8 @@ class UserAccess {
     fun createUser(name: String, email: String, password: String, role: String): Boolean {
         if (checkEmail(email)) return false
 
+        if (password.isBlank() || !email.contains("@")) return false
+
         transaction {
             UsersTable.insert {
                 it[UsersTable.name] = name

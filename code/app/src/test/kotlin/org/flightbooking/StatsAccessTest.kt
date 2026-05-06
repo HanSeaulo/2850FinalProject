@@ -8,7 +8,7 @@ class StatsAccessTest {
 
     @BeforeTest
     fun setup() {
-        // Connect to the database, no teardown needed since we aren't writing data!
+        // init db connection
         DBFactory.init()
     }
 
